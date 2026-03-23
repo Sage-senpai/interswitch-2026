@@ -1,0 +1,265 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users & Auth ────────────────────────────────────────────
+
+model User {
+  id        String    @id @default(uuid())
+  phone     String    @unique
+  name      String?
+  state     String?
+  lga       String?
+  kycStatus KycStatus @default(PENDING) @map("kyc_status")
+  avatar    String?
+  language  Language  @default(EN)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  wallet         Wallet?
+  savingsGoals   SavingsGoal[]
+  transactions   Transaction[]
+  userProgress   UserProgress[]
+  wagMemberships WAGMember[]
+  aiInteractions AIInteraction[]
+
+  @@map("users")
+}
+
+enum KycStatus {
+  PENDING
+  BASIC
+  VERIFIED
+}
+
+enum Language {
+  EN
+  HA
+  YO
+  IG
+}
+
+model OTPCode {
+  id        String   @id @default(uuid())
+  phone     String
+  code      String
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone, code])
+  @@map("otp_codes")
+}
+
+// ─── Wallet & Transactions ───────────────────────────────────
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  balance   Decimal  @default(0) @db.Decimal(12, 2)
+  currency  String   @default("NGN")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  userId      String            @map("user_id")
+  type        TransactionType
+  amount      Decimal           @db.Decimal(12, 2)
+  reference   String            @unique
+  iswRef      String?           @map("isw_ref")
+  status      TransactionStatus @default(PENDING)
+  description String?
+  metadata    Json?
+  txHash      String?           @map("tx_hash")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([reference])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  WALLET_FUNDING
+  BILL_PAYMENT
+  P2P_TRANSFER
+  SAVINGS_DEPOSIT
+  SAVINGS_WITHDRAWAL
+  WAG_CONTRIBUTION
+  WAG_PAYOUT
+  REWARD
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REVERSED
+}
+
+// ─── Savings ─────────────────────────────────────────────────
+
+model SavingsGoal {
+  id         String          @id @default(uuid())
+  userId     String          @map("user_id")
+  name       String
+  category   SavingsCategory
+  target     Decimal         @db.Decimal(12, 2)
+  current    Decimal         @default(0) @db.Decimal(12, 2)
+  autoAmount Decimal?        @map("auto_amount") @db.Decimal(12, 2)
+  frequency  Frequency?
+  iswToken   String?         @map("isw_token")
+  isActive   Boolean         @default(true) @map("is_active")
+  targetDate DateTime?       @map("target_date")
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("savings_goals")
+}
+
+enum SavingsCategory {
+  EDUCATION
+  BUSINESS
+  HEALTH
+  EMERGENCY
+  FAMILY
+  CUSTOM
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+// ─── Financial Literacy ──────────────────────────────────────
+
+model Lesson {
+  id          String         @id @default(uuid())
+  title       String
+  description String
+  category    LessonCategory
+  difficulty  Int            @default(1)
+  content     Json?
+  duration    Int            @default(5)
+  order       Int            @default(0)
+  badge       String?
+  reward      Int            @default(0)
+  isActive    Boolean        @default(true) @map("is_active")
+  createdAt   DateTime       @default(now()) @map("created_at")
+
+  userProgress UserProgress[]
+
+  @@map("lessons")
+}
+
+enum LessonCategory {
+  BUDGETING
+  SAVING
+  INVESTING
+  ENTREPRENEURSHIP
+  DIGITAL_SAFETY
+  DEBT_MANAGEMENT
+}
+
+model UserProgress {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  lessonId    String    @map("lesson_id")
+  score       Int       @default(0)
+  completed   Boolean   @default(false)
+  badgeEarned String?   @map("badge_earned")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id])
+  lesson Lesson @relation(fields: [lessonId], references: [id])
+
+  @@unique([userId, lessonId])
+  @@map("user_progress")
+}
+
+// ─── Women Affinity Groups (WAGs) ───────────────────────────
+
+model WAG {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  state           String
+  adminId         String   @map("admin_id")
+  poolBalance     Decimal  @default(0) @map("pool_balance") @db.Decimal(12, 2)
+  contractAddress String?  @map("contract_address")
+  maxMembers      Int      @default(30) @map("max_members")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  members       WAGMember[]
+  contributions WAGContribution[]
+
+  @@map("wags")
+}
+
+model WAGMember {
+  id       String   @id @default(uuid())
+  wagId    String   @map("wag_id")
+  userId   String   @map("user_id")
+  role     WAGRole  @default(MEMBER)
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  wag  WAG  @relation(fields: [wagId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([wagId, userId])
+  @@map("wag_members")
+}
+
+enum WAGRole {
+  ADMIN
+  MEMBER
+}
+
+model WAGContribution {
+  id        String   @id @default(uuid())
+  wagId     String   @map("wag_id")
+  userId    String   @map("user_id")
+  amount    Decimal  @db.Decimal(12, 2)
+  txHash    String?  @map("tx_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  wag WAG @relation(fields: [wagId], references: [id])
+
+  @@index([wagId])
+  @@map("wag_contributions")
+}
+
+// ─── AI Interactions ─────────────────────────────────────────
+
+model AIInteraction {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  message   String
+  response  String
+  context   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("ai_interactions")
+}
