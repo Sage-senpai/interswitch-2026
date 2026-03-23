@@ -1,0 +1,82 @@
+# =============================================================================
+# Purse - .gitignore
+# =============================================================================
+
+# -- Dependencies --
+node_modules/
+.pnp/
+.pnp.js
+
+# -- Build Outputs --
+build/
+dist/
+.next/
+out/
+*.tsbuildinfo
+
+# -- Environment & Secrets --
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# -- Interswitch API Credentials (NEVER commit these) --
+interswitch.config.local.js
+**/interswitch-sandbox-keys.*
+
+# -- Mobile / React Native --
+android/app/build/
+android/.gradle/
+ios/Pods/
+ios/build/
+*.apk
+*.ipa
+*.hmap
+*.jsbundle
+expo-env.d.ts
+.expo/
+
+# -- IDE & OS --
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -- Testing & Coverage --
+coverage/
+*.lcov
+.nyc_output/
+
+# -- Logs --
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# -- Blockchain / Smart Contracts --
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+
+# -- Misc --
+.cache/
+tmp/
+temp/
+
+# =============================================================================
+# Draft / Planning Files (private - do not publish)
+# =============================================================================
+purse-description.md
+purse-overview.md
+build-prompt.md
+engineering-prompt.md
+systems-auditing.md
+hackathon-requirements.md
