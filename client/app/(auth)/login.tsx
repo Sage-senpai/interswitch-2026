@@ -18,10 +18,19 @@ export default function LoginScreen() {
   const [name, setName] = useState('');
 
   const handleSubmit = async () => {
-    const formattedPhone = phone.startsWith('0') ? `+234${phone.slice(1)}` : phone;
+    let formattedPhone = phone.replace(/\s+/g, '');
+    if (formattedPhone.startsWith('0')) {
+      formattedPhone = `+234${formattedPhone.slice(1)}`;
+    } else if (!formattedPhone.startsWith('+')) {
+      formattedPhone = `+${formattedPhone}`;
+    }
     const result = await dispatch(sendOTP({ phone: formattedPhone, isLogin }));
     if (sendOTP.fulfilled.match(result)) {
-      router.push(`/(auth)/verify?phone=${formattedPhone}&mode=${mode}&name=${name}`);
+      const otp = result.payload.data?.otp || '';
+      router.push({
+        pathname: '/(auth)/verify',
+        params: { phone: formattedPhone, mode: mode || 'register', name, otp },
+      });
     }
   };
 

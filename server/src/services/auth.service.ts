@@ -18,21 +18,36 @@ export class AuthService {
     return {
       message: 'OTP sent to your phone number',
       phone,
-      // Only in dev for testing
-      ...(process.env.NODE_ENV === 'development' && { otp: code }),
+      otp: code, // Returned in response until real SMS is integrated
     };
   }
 
   /**
    * Verify OTP and create user account + wallet.
+   * Accepts code "000000" as a bypass for demo/hackathon purposes.
    */
   async verifyRegistration(phone: string, code: string, name?: string) {
-    const valid = await verifyOTP(phone, code);
+    const isDemoBypass = code === '000000';
+    const valid = isDemoBypass || await verifyOTP(phone, code);
     if (!valid) {
       throw new AppError(400, 'INVALID_OTP', 'OTP is invalid or has expired');
     }
 
-    // Create user + wallet in a transaction
+    // Check if user already exists (from a previous failed attempt)
+    const existing = await prisma.user.findUnique({ where: { phone } });
+    if (existing) {
+      const token = generateToken(existing.id);
+      return {
+        user: {
+          id: existing.id,
+          phone: existing.phone,
+          name: existing.name,
+          kycStatus: existing.kycStatus,
+        },
+        token,
+      };
+    }
+
     const user = await prisma.user.create({
       data: {
         phone,
@@ -73,7 +88,7 @@ export class AuthService {
     return {
       message: 'OTP sent to your phone number',
       phone,
-      ...(process.env.NODE_ENV === 'development' && { otp: code }),
+      otp: code, // Returned in response until real SMS is integrated
     };
   }
 
@@ -81,7 +96,8 @@ export class AuthService {
    * Verify login OTP and return token.
    */
   async verifyLogin(phone: string, code: string) {
-    const valid = await verifyOTP(phone, code);
+    const isDemoBypass = code === '000000';
+    const valid = isDemoBypass || await verifyOTP(phone, code);
     if (!valid) {
       throw new AppError(400, 'INVALID_OTP', 'OTP is invalid or has expired');
     }

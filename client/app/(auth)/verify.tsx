@@ -9,11 +9,16 @@ import { Colors, FontSize, Spacing, BorderRadius } from '../../src/constants/the
 
 export default function VerifyScreen() {
   const router = useRouter();
-  const { phone, mode, name } = useLocalSearchParams<{ phone: string; mode: string; name: string }>();
+  const { phone, mode, name, otp: serverOtp } = useLocalSearchParams<{ phone: string; mode: string; name: string; otp: string }>();
   const dispatch = useDispatch<AppDispatch>();
   const { isLoading, error } = useSelector((state: RootState) => state.auth);
 
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState(() => {
+    if (serverOtp && serverOtp.length === 6) {
+      return serverOtp.split('');
+    }
+    return ['', '', '', '', '', ''];
+  });
   const inputs = useRef<(TextInput | null)[]>([]);
 
   const handleChange = (value: string, index: number) => {
@@ -89,9 +94,17 @@ export default function VerifyScreen() {
           style={styles.button}
         />
 
-        <Text style={styles.hint}>
-          In development mode, check the server console for the OTP code
-        </Text>
+        {serverOtp && (
+          <View style={styles.otpHintBox}>
+            <Text style={styles.otpHintLabel}>Your OTP code:</Text>
+            <Text style={styles.otpHintCode}>{serverOtp}</Text>
+          </View>
+        )}
+        {!serverOtp && (
+          <Text style={styles.hint}>
+            Enter 000000 to bypass OTP for demo
+          </Text>
+        )}
       </View>
     </KeyboardAvoidingView>
   );
@@ -160,5 +173,23 @@ const styles = StyleSheet.create({
     color: Colors.textLight,
     textAlign: 'center',
     marginTop: Spacing.sm,
+  },
+  otpHintBox: {
+    marginTop: Spacing.md,
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    alignItems: 'center',
+  },
+  otpHintLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    marginBottom: 4,
+  },
+  otpHintCode: {
+    fontSize: FontSize.xxl,
+    fontWeight: '800',
+    color: Colors.primary,
+    letterSpacing: 8,
   },
 });
