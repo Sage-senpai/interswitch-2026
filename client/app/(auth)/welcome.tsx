@@ -1,128 +1,346 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, Animated, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import Button from '../../src/components/Button';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../src/constants/theme';
+import AfricanPattern from '../../src/components/AfricanPattern';
+import { useTheme } from '../../src/hooks/useTheme';
+import { useResponsive } from '../../src/hooks/useResponsive';
+import { FontSize, Spacing, BorderRadius } from '../../src/constants/theme';
+
+const FEATURES = [
+  { icon: 'book', title: 'Learn Finance', desc: 'Fun, bite-sized lessons on budgeting, saving & investing — in your language' },
+  { icon: 'flag', title: 'Save Smart', desc: 'Set goals and auto-save daily with Interswitch AutoPay' },
+  { icon: 'card', title: 'Pay & Transfer', desc: 'Bills, airtime, school fees — send money to anyone' },
+  { icon: 'people', title: 'WAG Community', desc: 'Join Women Affinity Groups for collective savings' },
+  { icon: 'chatbubble-ellipses', title: 'AI Advisor', desc: 'Get personalized financial guidance 24/7' },
+  { icon: 'shield-checkmark', title: 'Blockchain Trust', desc: 'Every savings transaction verified on-chain' },
+];
+
+const STATS = [
+  { value: '36M', label: 'Women financially excluded in Nigeria' },
+  { value: '5M', label: 'Target beneficiaries under NFWP-SU' },
+  { value: '26K+', label: 'WAGs formed, saving over ₦4.9B' },
+  { value: '250K+', label: 'Women in EmpowerHER training' },
+];
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
+  const { isDesktop, isTablet } = useResponsive();
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const featureAnims = FEATURES.map(() => useRef(new Animated.Value(0)).current);
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
+    ]).start();
+
+    featureAnims.forEach((anim, i) => {
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 500,
+        delay: 400 + i * 100,
+        useNativeDriver: true,
+      }).start();
+    });
+  }, []);
+
+  const isWide = isDesktop || isTablet;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.heroSection}>
-        <Text style={styles.emoji}>👛</Text>
-        <Text style={styles.title}>Welcome to Purse</Text>
-        <Text style={styles.subtitle}>
-          Your smart companion for financial literacy, savings, and secure payments
-        </Text>
-      </View>
-
-      <View style={styles.features}>
-        {[
-          { icon: '📚', title: 'Learn Finance', desc: 'Fun, bite-sized lessons on budgeting, saving & investing' },
-          { icon: '🎯', title: 'Save Smart', desc: 'Set goals and auto-save with Interswitch AutoPay' },
-          { icon: '💸', title: 'Pay & Transfer', desc: 'Bills, airtime, and send money — all in one app' },
-          { icon: '👥', title: 'WAG Community', desc: 'Join Women Affinity Groups for group savings' },
-          { icon: '🤖', title: 'AI Advisor', desc: 'Get personalized financial advice anytime' },
-        ].map((feature, index) => (
-          <View key={index} style={styles.featureRow}>
-            <Text style={styles.featureIcon}>{feature.icon}</Text>
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>{feature.title}</Text>
-              <Text style={styles.featureDesc}>{feature.desc}</Text>
-            </View>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.scrollContent}
+    >
+      {/* Hero Section */}
+      <View style={[styles.hero, { backgroundColor: isDark ? colors.surface : colors.primaryDark }]}>
+        <AfricanPattern width="100%" height="100%" opacity={isDark ? 0.06 : 0.1} variant="ankara" />
+        <Animated.View
+          style={[
+            styles.heroContent,
+            isWide && styles.heroContentWide,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+          ]}
+        >
+          <View style={styles.heroBadge}>
+            <Text style={styles.heroBadgeText}>Enyata x Interswitch Buildathon 2026</Text>
           </View>
-        ))}
+          <Text style={[styles.heroTitle, isWide && styles.heroTitleWide]}>
+            Empowering{'\n'}Nigerian Women{'\n'}
+            <Text style={{ color: isDark ? colors.accent : '#FFD700' }}>Financially</Text>
+          </Text>
+          <Text style={styles.heroSubtitle}>
+            AI-powered financial literacy, micro-savings, and secure payments — designed for women and girls in rural and underserved communities.
+          </Text>
+          <View style={[styles.heroCTA, isWide && styles.heroCTAWide]}>
+            <Button
+              title="Get Started Free"
+              onPress={() => router.push('/(auth)/login?mode=register')}
+              size="lg"
+              style={[styles.ctaPrimary, { backgroundColor: isDark ? colors.primary : '#FFD700' }]}
+              textStyle={{ color: isDark ? colors.textInverse : '#1A1A2E' }}
+            />
+            <Button
+              title="Sign In"
+              onPress={() => router.push('/(auth)/login?mode=login')}
+              variant="outline"
+              size="lg"
+              style={[styles.ctaOutline, { borderColor: 'rgba(255,255,255,0.4)' }]}
+              textStyle={{ color: '#FFFFFF' }}
+            />
+          </View>
+        </Animated.View>
       </View>
 
-      <View style={styles.actions}>
+      {/* Impact Stats */}
+      <View style={[styles.statsSection, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.sectionLabel, { color: colors.primary }]}>THE PROBLEM</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Millions of women are left behind
+        </Text>
+        <View style={[styles.statsGrid, isWide && styles.statsGridWide]}>
+          {STATS.map((stat, i) => (
+            <Animated.View
+              key={i}
+              style={[
+                styles.statCard,
+                {
+                  backgroundColor: colors.surfaceSecondary,
+                  borderColor: colors.border,
+                  opacity: featureAnims[i] || fadeAnim,
+                },
+              ]}
+            >
+              <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
+            </Animated.View>
+          ))}
+        </View>
+      </View>
+
+      {/* Features */}
+      <View style={[styles.featuresSection, { backgroundColor: colors.background }]}>
+        <Text style={[styles.sectionLabel, { color: colors.primary }]}>THE SOLUTION</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Everything she needs in one app
+        </Text>
+        <View style={[styles.featuresGrid, isWide && styles.featuresGridWide]}>
+          {FEATURES.map((feature, i) => (
+            <Animated.View
+              key={i}
+              style={[
+                styles.featureCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  opacity: featureAnims[i],
+                  transform: [{ translateY: featureAnims[i].interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
+                },
+              ]}
+            >
+              <View style={[styles.featureIconBox, { backgroundColor: colors.accentLight }]}>
+                <Ionicons name={feature.icon as any} size={24} color={colors.primary} />
+              </View>
+              <Text style={[styles.featureTitle, { color: colors.text }]}>{feature.title}</Text>
+              <Text style={[styles.featureDesc, { color: colors.textSecondary }]}>{feature.desc}</Text>
+            </Animated.View>
+          ))}
+        </View>
+      </View>
+
+      {/* CTA Section */}
+      <View style={[styles.ctaSection, { backgroundColor: isDark ? colors.surface : colors.primaryDark }]}>
+        <AfricanPattern width="100%" height="100%" opacity={0.05} variant="adire" />
+        <Text style={styles.ctaTitle}>Start your financial journey today</Text>
+        <Text style={styles.ctaSubtitle}>
+          Join thousands of women building a brighter financial future. Free forever.
+        </Text>
         <Button
-          title="Create Account"
+          title="Create Free Account"
           onPress={() => router.push('/(auth)/login?mode=register')}
           size="lg"
-        />
-        <Button
-          title="I Already Have an Account"
-          onPress={() => router.push('/(auth)/login?mode=login')}
-          variant="outline"
-          size="lg"
+          style={[styles.ctaButton, { backgroundColor: isDark ? colors.primary : '#FFD700' }]}
+          textStyle={{ color: isDark ? colors.textInverse : '#1A1A2E', fontWeight: '700' }}
         />
       </View>
 
-      <Text style={styles.powered}>Powered by Interswitch</Text>
+      {/* Footer */}
+      <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+        <View style={[styles.footerContent, isWide && styles.footerContentWide]}>
+          <View style={styles.footerBrand}>
+            <Text style={[styles.footerLogo, { color: colors.primary }]}>Purse</Text>
+            <Text style={[styles.footerTagline, { color: colors.textSecondary }]}>
+              One saved naira at a time
+            </Text>
+          </View>
+          <View style={styles.footerBadges}>
+            <View style={[styles.badge, { borderColor: colors.border }]}>
+              <Ionicons name="shield-checkmark" size={14} color={colors.interswitch} />
+              <Text style={[styles.badgeText, { color: colors.textSecondary }]}>Interswitch Secured</Text>
+            </View>
+            <View style={[styles.badge, { borderColor: colors.border }]}>
+              <Ionicons name="cube" size={14} color={colors.primary} />
+              <Text style={[styles.badgeText, { color: colors.textSecondary }]}>Blockchain Verified</Text>
+            </View>
+          </View>
+        </View>
+        <Text style={[styles.copyright, { color: colors.textLight }]}>
+          Built for the Enyata x Interswitch Buildathon 2026
+        </Text>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
+  container: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
+
+  // Hero
+  hero: {
+    position: 'relative',
+    overflow: 'hidden',
+    paddingTop: Platform.OS === 'web' ? 80 : 60,
+    paddingBottom: 60,
+    paddingHorizontal: Spacing.lg,
   },
-  content: {
-    padding: Spacing.lg,
-    paddingTop: 60,
+  heroContent: { alignItems: 'center', zIndex: 1 },
+  heroContentWide: { maxWidth: 700, alignSelf: 'center' },
+  heroBadge: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: BorderRadius.full,
+    marginBottom: Spacing.lg,
   },
-  heroSection: {
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
-  },
-  emoji: {
-    fontSize: 56,
+  heroBadgeText: { color: 'rgba(255,255,255,0.9)', fontSize: FontSize.xs, fontWeight: '600' },
+  heroTitle: {
+    fontSize: 38,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    lineHeight: 48,
     marginBottom: Spacing.md,
   },
-  title: {
-    fontSize: FontSize.hero,
-    fontWeight: '800',
-    color: Colors.primary,
-    textAlign: 'center',
-  },
-  subtitle: {
+  heroTitleWide: { fontSize: 52, lineHeight: 64 },
+  heroSubtitle: {
     fontSize: FontSize.md,
-    color: Colors.textSecondary,
+    color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
-    marginTop: Spacing.sm,
     lineHeight: 24,
-    paddingHorizontal: Spacing.md,
-  },
-  features: {
-    gap: Spacing.md,
+    maxWidth: 500,
     marginBottom: Spacing.xl,
   },
-  featureRow: {
-    flexDirection: 'row',
+  heroCTA: { flexDirection: 'column', gap: Spacing.sm, width: '100%', maxWidth: 320 },
+  heroCTAWide: { flexDirection: 'row', maxWidth: 400 },
+  ctaPrimary: { flex: 1 },
+  ctaOutline: { flex: 1 },
+
+  // Stats
+  statsSection: {
+    padding: Spacing.xl,
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+  },
+  sectionLabel: {
+    fontSize: FontSize.xs,
+    fontWeight: '800',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: Spacing.sm,
+  },
+  sectionTitle: {
+    fontSize: FontSize.xxl,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+    maxWidth: 500,
+  },
+  statsGrid: { gap: Spacing.sm, width: '100%', maxWidth: 800 },
+  statsGridWide: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  statCard: {
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
-    gap: Spacing.md,
-  },
-  featureIcon: {
-    fontSize: 28,
-  },
-  featureText: {
+    alignItems: 'center',
+    minWidth: 160,
     flex: 1,
   },
-  featureTitle: {
-    fontSize: FontSize.md,
-    fontWeight: '700',
-    color: Colors.text,
+  statValue: { fontSize: FontSize.xxl, fontWeight: '800' },
+  statLabel: { fontSize: FontSize.xs, textAlign: 'center', marginTop: 4 },
+
+  // Features
+  featuresSection: { padding: Spacing.xl, alignItems: 'center' },
+  featuresGrid: { gap: Spacing.sm, width: '100%', maxWidth: 900 },
+  featuresGridWide: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  featureCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    minWidth: 250,
+    flex: 1,
+    maxWidth: 280,
   },
-  featureDesc: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    marginTop: 2,
+  featureIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
   },
-  actions: {
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
+  featureTitle: { fontSize: FontSize.md, fontWeight: '700', marginBottom: 4 },
+  featureDesc: { fontSize: FontSize.sm, lineHeight: 20 },
+
+  // CTA Section
+  ctaSection: {
+    position: 'relative',
+    overflow: 'hidden',
+    padding: Spacing.xxl,
+    alignItems: 'center',
   },
-  powered: {
+  ctaTitle: {
+    fontSize: FontSize.xxl,
+    fontWeight: '800',
+    color: '#FFFFFF',
     textAlign: 'center',
-    fontSize: FontSize.xs,
-    color: Colors.textLight,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.sm,
+    zIndex: 1,
   },
+  ctaSubtitle: {
+    fontSize: FontSize.md,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+    maxWidth: 400,
+    zIndex: 1,
+  },
+  ctaButton: { minWidth: 250, zIndex: 1 },
+
+  // Footer
+  footer: {
+    padding: Spacing.lg,
+    borderTopWidth: 1,
+    alignItems: 'center',
+  },
+  footerContent: { width: '100%', alignItems: 'center', gap: Spacing.md, marginBottom: Spacing.md },
+  footerContentWide: { flexDirection: 'row', justifyContent: 'space-between' },
+  footerBrand: { alignItems: 'center' },
+  footerLogo: { fontSize: FontSize.xl, fontWeight: '800' },
+  footerTagline: { fontSize: FontSize.xs, fontStyle: 'italic', marginTop: 2 },
+  footerBadges: { flexDirection: 'row', gap: Spacing.sm },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  badgeText: { fontSize: FontSize.xs },
+  copyright: { fontSize: 11, textAlign: 'center' },
 });
