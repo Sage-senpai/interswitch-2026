@@ -12,9 +12,7 @@ const app = express();
 // Security
 app.use(helmet());
 app.use(cors({
-  origin: env.NODE_ENV === 'production'
-    ? ['https://purse-app.vercel.app']
-    : ['http://localhost:8081', 'http://localhost:19006', 'http://localhost:3001'],
+  origin: true, // Allow all origins (hackathon — tighten for production)
   credentials: true,
 }));
 
