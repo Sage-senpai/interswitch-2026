@@ -1,5 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://interswitch-2026-production.up.railway.app/api/v1';
 
@@ -11,7 +11,7 @@ const api = axios.create({
 
 // Attach JWT token to every request
 api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync('authToken');
+  const token = await storage.getItemAsync('authToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -23,7 +23,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      await SecureStore.deleteItemAsync('authToken');
+      await storage.deleteItemAsync('authToken');
     }
     return Promise.reject(error);
   },

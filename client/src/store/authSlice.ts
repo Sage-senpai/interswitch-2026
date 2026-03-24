@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 import { authAPI } from '../services/api';
 
 interface User {
@@ -49,19 +49,19 @@ export const verifyOTP = createAsyncThunk(
       : await authAPI.verify(phone, code, name);
 
     const { user, token } = response.data.data;
-    await SecureStore.setItemAsync('authToken', token);
+    await storage.setItemAsync('authToken', token);
     return { user, token };
   },
 );
 
 export const loadAuth = createAsyncThunk('auth/load', async () => {
-  const token = await SecureStore.getItemAsync('authToken');
+  const token = await storage.getItemAsync('authToken');
   if (!token) return null;
   return { token };
 });
 
 export const logout = createAsyncThunk('auth/logout', async () => {
-  await SecureStore.deleteItemAsync('authToken');
+  await storage.deleteItemAsync('authToken');
 });
 
 const authSlice = createSlice({
