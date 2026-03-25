@@ -2,13 +2,64 @@ import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { BounceIn } from 'react-native-reanimated';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useResponsive } from '../../src/hooks/useResponsive';
 import DesktopSidebar from '../../src/components/DesktopSidebar';
 
+// Icon names: [active, inactive]
+const TAB_ICONS: Record<string, [string, string]> = {
+  index:     ['home',   'home-outline'],
+  learn:     ['book',   'book-outline'],
+  savings:   ['wallet', 'wallet-outline'],
+  community: ['people', 'people-outline'],
+  profile:   ['person', 'person-outline'],
+};
+
+interface AnimatedTabIconProps {
+  name: string;
+  color: string;
+  size: number;
+  focused: boolean;
+}
+
+function AnimatedTabIcon({ name, color, size, focused }: AnimatedTabIconProps) {
+  const [active, inactive] = TAB_ICONS[name] ?? ['ellipse', 'ellipse-outline'];
+  const iconName = focused ? active : inactive;
+
+  if (focused) {
+    return (
+      <Animated.View entering={BounceIn.duration(400)}>
+        <Ionicons name={iconName as any} size={size} color={color} />
+      </Animated.View>
+    );
+  }
+
+  return <Ionicons name={iconName as any} size={size} color={color} />;
+}
+
 export default function TabLayout() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { isDesktop } = useResponsive();
+
+  const floatingTabBarStyle = {
+    position: 'absolute' as const,
+    bottom: 16,
+    left: 20,
+    right: 20,
+    borderRadius: 28,
+    height: 64,
+    backgroundColor: isDark ? 'rgba(17,17,24,0.92)' : 'rgba(255,255,255,0.92)',
+    borderTopWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
+    ...(Platform.OS === 'web'
+      ? { backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }
+      : {}),
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -18,25 +69,21 @@ export default function TabLayout() {
           screenOptions={{
             tabBarActiveTintColor: colors.primary,
             tabBarInactiveTintColor: colors.textLight,
-            tabBarStyle: isDesktop
-              ? { display: 'none' }
-              : {
-                  backgroundColor: colors.tabBar,
-                  borderTopColor: colors.tabBarBorder,
-                  borderTopWidth: 1,
-                  paddingBottom: Platform.OS === 'ios' ? 20 : 6,
-                  paddingTop: 6,
-                  height: Platform.OS === 'ios' ? 80 : 60,
-                },
+            tabBarStyle: isDesktop ? { display: 'none' } : floatingTabBarStyle,
             tabBarLabelStyle: {
               fontSize: 11,
               fontWeight: '600',
+              // Push label down slightly so it sits nicely inside the pill
+              marginBottom: 6,
+            },
+            // Keep items centered vertically within the taller pill
+            tabBarItemStyle: {
+              paddingTop: 8,
             },
             headerStyle: { backgroundColor: colors.headerBg },
             headerTintColor: colors.headerText,
             headerTitleStyle: { fontWeight: '700' },
             headerShadowVisible: false,
-            // On desktop, hide individual tab headers (sidebar has branding)
             ...(isDesktop ? { headerShown: false } : {}),
           }}
         >
@@ -44,7 +91,9 @@ export default function TabLayout() {
             name="index"
             options={{
               title: 'Home',
-              tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+              tabBarIcon: ({ color, size, focused }) => (
+                <AnimatedTabIcon name="index" color={color} size={size} focused={focused} />
+              ),
               headerTitle: 'Purse',
             }}
           />
@@ -52,7 +101,9 @@ export default function TabLayout() {
             name="learn"
             options={{
               title: 'Learn',
-              tabBarIcon: ({ color, size }) => <Ionicons name="book" size={size} color={color} />,
+              tabBarIcon: ({ color, size, focused }) => (
+                <AnimatedTabIcon name="learn" color={color} size={size} focused={focused} />
+              ),
               headerTitle: 'Financial Lessons',
             }}
           />
@@ -60,7 +111,9 @@ export default function TabLayout() {
             name="savings"
             options={{
               title: 'Save',
-              tabBarIcon: ({ color, size }) => <Ionicons name="wallet" size={size} color={color} />,
+              tabBarIcon: ({ color, size, focused }) => (
+                <AnimatedTabIcon name="savings" color={color} size={size} focused={focused} />
+              ),
               headerTitle: 'Savings Goals',
             }}
           />
@@ -68,7 +121,9 @@ export default function TabLayout() {
             name="community"
             options={{
               title: 'WAG',
-              tabBarIcon: ({ color, size }) => <Ionicons name="people" size={size} color={color} />,
+              tabBarIcon: ({ color, size, focused }) => (
+                <AnimatedTabIcon name="community" color={color} size={size} focused={focused} />
+              ),
               headerTitle: 'Community',
             }}
           />
@@ -76,7 +131,9 @@ export default function TabLayout() {
             name="profile"
             options={{
               title: 'Profile',
-              tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+              tabBarIcon: ({ color, size, focused }) => (
+                <AnimatedTabIcon name="profile" color={color} size={size} focused={focused} />
+              ),
               headerTitle: 'My Profile',
             }}
           />

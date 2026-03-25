@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Alert, useWindowDimensions, Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInRight, FadeOutLeft } from 'react-native-reanimated';
+import Animated, { FadeInRight, FadeInDown, FadeOutLeft } from 'react-native-reanimated';
+import * as Speech from 'expo-speech';
+import * as Haptics from 'expo-haptics';
 import Button from '../../src/components/Button';
 import Card from '../../src/components/Card';
 import { useTheme } from '../../src/hooks/useTheme';
@@ -25,11 +27,41 @@ export default function LessonDetailScreen() {
   const [quizAnswered, setQuizAnswered] = useState(false);
   const [score, setScore] = useState(0);
   const [completing, setCompleting] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const speakText = async (text: string) => {
+    try {
+      if (isSpeaking) {
+        await Speech.stop();
+        setIsSpeaking(false);
+        return;
+      }
+      setIsSpeaking(true);
+      Speech.speak(text, {
+        language: 'en-NG',
+        rate: 0.85,
+        onDone: () => setIsSpeaking(false),
+        onStopped: () => setIsSpeaking(false),
+      });
+    } catch {
+      setIsSpeaking(false);
+    }
+  };
+
+  const hapticSuccess = () => {
+    try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+  };
+
+  const hapticLight = () => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+  };
 
   useEffect(() => {
     lessonAPI.getOne(id!)
       .then((res) => setLesson(res.data.data))
       .catch(() => {});
+    return () => { Speech.stop(); };
   }, [id]);
 
   if (!lesson) {
@@ -58,6 +90,9 @@ export default function LessonDetailScreen() {
     setQuizAnswered(true);
     if (index === section.answer) {
       setScore((prev) => prev + 1);
+      hapticSuccess();
+    } else {
+      hapticLight();
     }
   };
 
@@ -85,16 +120,21 @@ export default function LessonDetailScreen() {
       const res = await lessonAPI.complete(id!, finalScore);
       const data = res.data.data;
 
-      if (Platform.OS === 'web') {
-        alert(`Lesson Complete! Score: ${finalScore}%${data?.badge ? ` - Badge: ${data.badge}` : ''}`);
-        router.back();
-      } else {
-        Alert.alert(
-          'Lesson Complete!',
-          `Score: ${finalScore}%\n${data?.badge ? `Badge earned: ${data.badge}` : ''}\n${data?.rewardMessage || ''}`,
-          [{ text: 'Continue', onPress: () => router.back() }],
-        );
-      }
+      hapticSuccess();
+      setShowCelebration(true);
+      setTimeout(() => {
+        setShowCelebration(false);
+        if (Platform.OS === 'web') {
+          alert(`Lesson Complete! Score: ${finalScore}%${data?.badge ? ` - Badge: ${data.badge}` : ''}`);
+          router.back();
+        } else {
+          Alert.alert(
+            'Lesson Complete!',
+            `Score: ${finalScore}%\n${data?.badge ? `Badge earned: ${data.badge}` : ''}\n${data?.rewardMessage || ''}`,
+            [{ text: 'Continue', onPress: () => router.back() }],
+          );
+        }
+      }, 2000);
     } catch {
       if (Platform.OS === 'web') {
         alert('Great job completing this lesson!');
@@ -118,9 +158,23 @@ export default function LessonDetailScreen() {
       case 'text':
         return (
           <Animated.View entering={FadeInRight.duration(300)} key={`s-${currentSection}`}>
-            <Text style={[styles.sectionText, { color: colors.text }]}>
-              {getSectionText(section)}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+              <Text style={[styles.sectionText, { color: colors.text, flex: 1 }]}>
+                {getSectionText(section)}
+              </Text>
+              <TouchableOpacity
+                onPress={() => speakText(getSectionText(section))}
+                style={{
+                  width: 36, height: 36, borderRadius: 18,
+                  backgroundColor: colors.primary + '15',
+                  alignItems: 'center', justifyContent: 'center', marginTop: 2,
+                }}
+                accessibilityLabel="Read aloud"
+                accessibilityRole="button"
+              >
+                <Ionicons name={isSpeaking ? 'stop' : 'volume-high'} size={16} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
           </Animated.View>
         );
 
@@ -293,6 +347,32 @@ export default function LessonDetailScreen() {
           <Ionicons name={isLast ? 'checkmark' : 'chevron-forward'} size={20} color="#fff" />
         </TouchableOpacity>
       </View>
+
+      {/* ── Celebration Overlay ── */}
+      {showCelebration && (
+        <Animated.View
+          entering={FadeInDown.springify().damping(12)}
+          style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            alignItems: 'center', justifyContent: 'center', zIndex: 999,
+          }}
+        >
+          <Animated.View entering={FadeInDown.delay(200).springify().damping(10)} style={{
+            backgroundColor: colors.surface, borderRadius: 24, padding: 40,
+            alignItems: 'center', maxWidth: 300,
+            ...(Platform.OS === 'web' ? { backdropFilter: 'blur(20px)' } as any : {}),
+          }}>
+            <Text style={{ fontSize: 64, marginBottom: 16 }}>🎉</Text>
+            <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, marginBottom: 8, textAlign: 'center' }}>
+              Lesson Complete!
+            </Text>
+            <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center' }}>
+              Amazing work! You're one step closer to financial freedom.
+            </Text>
+          </Animated.View>
+        </Animated.View>
+      )}
     </ScrollView>
   );
 }
