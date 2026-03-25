@@ -21,13 +21,16 @@ const envSchema = z.object({
   ISW_SECRET_KEY: z.string().min(1),
   ISW_PASSPHRASE: z.string().optional(),
   ISW_BASE_URL: z.string().url().default('https://qa.interswitchng.com'),
-  ISW_PAYMENT_URL: z.string().url().optional(),
+  ISW_PAYMENT_URL: z.string().optional(),
+  ISW_PASSPORT_URL: z.string().optional(),
+  ISW_MERCHANT_CODE: z.string().optional(),
+  ISW_PAY_ITEM_ID: z.string().optional(),
 
   // AI
   OPENAI_API_KEY: z.string().optional(),
 
   // Blockchain
-  POLYGON_RPC_URL: z.string().url().optional(),
+  POLYGON_RPC_URL: z.string().optional(),
   WALLET_PRIVATE_KEY: z.string().optional(),
   CONTRACT_SAVINGS_LEDGER: z.string().optional(),
   CONTRACT_WAG_POOL: z.string().optional(),
