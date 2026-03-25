@@ -604,7 +604,114 @@ async function main() {
     console.log(`${category} (${categoryLessons.length}):\n${titles}\n`);
   }
 
-  console.log("Seed complete.");
+  // ─── Seed WAG Communities ──────────────────────────────────────────────────
+
+  console.log("\n--- Seeding WAG Communities ---\n");
+
+  // Get all users to assign as members
+  const allUsers = await prisma.user.findMany({ take: 10 });
+  const adminUser = allUsers[0]; // First user becomes admin of all demo WAGs
+
+  if (!adminUser) {
+    console.log("No users found — skipping WAG seed. Register at least one user first.");
+  } else {
+    // Clear existing WAGs
+    await prisma.wAGContribution.deleteMany({});
+    await prisma.wAGMember.deleteMany({});
+    await prisma.wAG.deleteMany({});
+
+    const wags = [
+      {
+        name: "Iya Oloja Market Women",
+        description: "A savings group for market women in Balogun Market, Lagos. We save together every week to grow our businesses and support each other during tough times.",
+        state: "Lagos",
+        maxMembers: 25,
+        poolBalance: 487500,
+      },
+      {
+        name: "Arewa Women Empowerment Circle",
+        description: "Northern Nigerian women committed to financial independence. We combine weekly savings with financial literacy to break barriers and build wealth.",
+        state: "Kano",
+        maxMembers: 30,
+        poolBalance: 325000,
+      },
+      {
+        name: "Ndi Nwanyi Igbo Savings Union",
+        description: "Igbo women entrepreneurs pooling resources through traditional isusu, now digitized. From market stalls to tech — we rise together.",
+        state: "Anambra",
+        maxMembers: 20,
+        poolBalance: 612000,
+      },
+      {
+        name: "Eko Women Tech Builders",
+        description: "Women in tech across Lagos building financial resilience. Weekly micro-savings plus peer mentoring for career growth.",
+        state: "Lagos",
+        maxMembers: 15,
+        poolBalance: 890000,
+      },
+      {
+        name: "Niger Delta Sisters Fund",
+        description: "Women from the Niger Delta supporting each other through cooperative savings. Education, health, and business — one contribution at a time.",
+        state: "Rivers",
+        maxMembers: 30,
+        poolBalance: 256000,
+      },
+      {
+        name: "Abuja Professional Women Circle",
+        description: "Professional women in the FCT committed to growing wealth together. Monthly contributions, quarterly payouts, and financial workshops.",
+        state: "FCT",
+        maxMembers: 20,
+        poolBalance: 1250000,
+      },
+      {
+        name: "Jos Plateau Women Farmers Co-op",
+        description: "Women farmers on the Jos Plateau saving together for seeds, equipment, and school fees. Growing food, growing futures.",
+        state: "Plateau",
+        maxMembers: 25,
+        poolBalance: 178500,
+      },
+    ];
+
+    for (const wag of wags) {
+      const created = await prisma.wAG.create({
+        data: {
+          name: wag.name,
+          description: wag.description,
+          state: wag.state,
+          adminId: adminUser.id,
+          poolBalance: wag.poolBalance,
+          maxMembers: wag.maxMembers,
+          isActive: true,
+        },
+      });
+
+      // Add admin as member
+      await prisma.wAGMember.create({
+        data: {
+          wagId: created.id,
+          userId: adminUser.id,
+          role: "ADMIN",
+        },
+      });
+
+      // Add other users as members (up to 5)
+      for (let i = 1; i < Math.min(allUsers.length, 6); i++) {
+        await prisma.wAGMember.create({
+          data: {
+            wagId: created.id,
+            userId: allUsers[i].id,
+            role: "MEMBER",
+          },
+        });
+      }
+
+      console.log(`  Created WAG: ${wag.name} (${wag.state}) — ₦${wag.poolBalance.toLocaleString()}`);
+    }
+
+    console.log(`\n${wags.length} WAG communities seeded.`);
+  }
+
+  console.log("\nSeed complete.");
 }
 
 main()
