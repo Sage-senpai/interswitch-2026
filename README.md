@@ -9,9 +9,9 @@
 
 *Unlock your financial future — one saved naira at a time.*
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Visit-brightgreen?style=for-the-badge)](https://purse-app.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Visit-brightgreen?style=for-the-badge)](https://purse-app-zeta.vercel.app)
 [![Interswitch Powered](https://img.shields.io/badge/Powered_By-Interswitch-0066FF?style=for-the-badge)](https://developer.interswitchgroup.com)
-[![Enyata Buildathon 2026](https://img.shields.io/badge/Enyata_x_Interswitch-Buildathon_2026-7B2D8E?style=for-the-badge)]()
+[![Enyata Buildathon 2026](https://img.shields.io/badge/Enyata_x_Interswitch-Buildathon_2026-7B2D8E?style=for-the-badge)](https://buildathon.enyata.com)
 
 </div>
 
@@ -19,14 +19,15 @@
 
 ## The Problem
 
-**36 million Nigerian women remain financially excluded.** In rural communities, the gap is even wider — women face limited banking access, low literacy, cultural barriers, and zero tailored tools. Existing solutions were not built for them.
+**36 million Nigerian women remain financially excluded.** In rural communities, the gap is even wider — women face limited banking access, low literacy, cultural barriers, and zero tailored digital tools.
 
 | Stat | Source |
 |------|--------|
-| Women's financial inclusion sits at ~64% vs. higher for men | CBN NFIS / EFInA 2025 |
-| 250,000+ women registered for EmpowerHER virtual financial literacy training | Federal Ministry of Women Affairs, 2025 |
-| NFWP-SU targets 5 million women directly (25M indirectly) across all 36 states + FCT | World Bank, Feb 2026 ($540M) |
+| Women's financial exclusion at ~36% (vs ~24% for men) | CBN NFIS / EFInA 2025 |
+| 250,000+ women registered for EmpowerHER virtual financial literacy | Federal Ministry of Women Affairs, 2025 |
+| NFWP-SU targets 5 million women directly across all 36 states + FCT | World Bank, Feb 2026 ($540M) |
 | 26,000+ Women Affinity Groups (WAGs) formed, saving over ₦4.9B collectively | NFWP Progress Reports |
+| Nigerian women are 34% less likely than men to use mobile internet | GSMA 2024 Mobile Gender Gap Report |
 
 The infrastructure is being built at policy level. **What's missing is the digital bridge** — a tool that meets these women where they are, teaches them finance in their language, and gives them real savings and payment power.
 
@@ -34,47 +35,61 @@ The infrastructure is being built at policy level. **What's missing is the digit
 
 ## The Solution
 
-**Purse** is a mobile-first, AI-powered app that combines gamified financial education with real micro-savings and secure payments — all integrated with **Interswitch's payment infrastructure**. Designed specifically for women and girls in rural and underserved Nigeria.
+**Purse** is a mobile-first, AI-powered fintech app that combines gamified financial education with real micro-savings and secure payments — all integrated with **Interswitch's payment infrastructure**. Designed specifically for women and girls in underserved Nigeria.
 
-Purse doesn't just teach finance. It **practices** it — every lesson unlocks real savings tools, every module completed improves your credit profile, every naira saved is secured on-chain for transparency.
+Purse doesn't just teach finance — it **practices** it. Every lesson unlocks real savings tools, every module completed earns rewards, and every naira saved is tracked transparently.
+
+**Sectors:** Payments | Social Services | Emerging Technology (AI + Blockchain)
 
 ---
 
 ## Key Features
 
 ### Financial Literacy (Gamified)
-- Bite-sized modules: budgeting, saving, investing, entrepreneurship, digital safety
-- Local dialect support (Hausa, Yoruba, Igbo) via voice and text
-- Badges, rewards (airtime credits, cash bonuses), and certificates
-- Low-data mode and offline access for rural connectivity
+- 12 bite-sized modules across 6 categories: budgeting, saving, investing, entrepreneurship, digital safety, debt management
+- Real Nigerian context: naira examples, ajo/esusu references, market women scenarios
+- Badges, XP rewards, daily challenges, and learning streaks
+- Quiz-based assessments after each lesson
 
 ### AI Financial Advisor
 - Personalized advice based on income patterns, expenses, and goals
 - Smart nudges: *"Save ₦5,000 for school fees by next month"*
-- Risk detection and gentle behavioral coaching
+- Financial health score (0-100) based on 5 weighted factors
 - Goal tracking with visual progress dashboards
 
 ### Micro-Savings & Goals
-- Automated round-up savings on every transaction
-- Daily/weekly auto-deposits via **Interswitch AutoPay**
+- Create savings goals by category: Education, Business, Health, Emergency, Family
+- Automated recurring deposits via **Interswitch AutoPay**
 - Group savings pots for Women Affinity Groups (WAGs)
-- Goal categories: education, business startup, health, emergencies
+- Emergency fund calculator with gap analysis
 
 ### Secure Payments & Transfers (Interswitch-Powered)
-- **IPG (Payment Gateway):** Collect payments, fund wallets, process subscriptions
-- **Quickteller:** Bill payments (utilities, school fees), peer-to-peer transfers within WAGs
-- **Transfers API:** Low-fee diaspora remittances to family members
-- **AutoPay:** Recurring micro-savings deductions, automated goal contributions
+- **IPG (Payment Gateway):** Fund wallets via card payments
+- **Quickteller:** Bill payments (airtime, DSTV, utilities), peer-to-peer transfers
+- **Transfers API:** Cross-bank remittances and WAG payouts
+- **AutoPay:** Recurring micro-savings deductions
 
-### Community & Peer Mentoring
-- Private WAG forums for sharing business tips and mutual support
-- Moderated spaces safe for younger girls
-- Peer mentoring matching based on goals and experience
+### Budget Tracker
+- Set monthly budgets across 8 spending categories
+- Visual progress bars with risk indicators (green/orange/red)
+- Spending insights and tips based on usage patterns
+
+### Community & WAGs
+- 7 pre-seeded Women Affinity Groups spanning Lagos, Kano, Anambra, FCT, Rivers, Plateau
+- Create/join WAGs with unique invite codes
+- Pool balances, member management, contribution tracking
+- WhatsApp share integration for WAG invites
+
+### Financial Tools
+- **Financial Health Score** — Weighted analysis of savings, literacy, budgeting, emergency preparedness, and community engagement
+- **Emergency Fund Calculator** — Input expenses and dependents, get personalized savings targets
+- **Referral System** — Share code, earn ₦200 when friends join and complete lessons
+- **Transaction History** — Filterable, date-grouped, color-coded transaction log
 
 ### Blockchain Transparency
 - Transaction logs and savings records on-chain for trust and auditability
 - Group savings verification — every member can see the pot
-- Financial discipline proof for loan/grant applications
+- Smart contract scaffold on Polygon L2
 
 ---
 
@@ -82,15 +97,33 @@ Purse doesn't just teach finance. It **practices** it — every lesson unlocks r
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| **Mobile** | React Native (Expo) | Cross-platform mobile app |
-| **Backend** | Node.js + Express | REST API, business logic |
-| **AI/ML** | TensorFlow Lite, OpenAI API | Personalized advisor, NLP |
+| **Mobile/Web** | React Native (Expo SDK 54) | Cross-platform app (iOS, Android, Web) |
+| **Backend** | Node.js + Express + TypeScript | REST API, business logic |
+| **AI** | OpenAI API | Personalized financial advisor |
 | **Payments** | **Interswitch IPG, Quickteller, AutoPay, Transfers** | Collections, bills, transfers, recurring |
 | **Blockchain** | Solidity (Polygon L2) | Transparent savings ledger |
-| **Database** | PostgreSQL + Redis | Persistent storage + caching |
-| **Auth** | JWT + OTP (via Interswitch) | Secure authentication |
-| **Hosting** | Vercel (frontend), Railway/Render (backend) | Live deployment |
-| **Offline** | AsyncStorage + SQLite | Offline-first for rural areas |
+| **Database** | PostgreSQL (Neon) + Redis (Upstash) | Persistent storage + caching |
+| **ORM** | Prisma | Type-safe database access |
+| **Auth** | JWT + OTP | Secure phone-based authentication |
+| **Frontend Hosting** | Vercel | Live web deployment |
+| **Backend Hosting** | Railway | Live API deployment |
+
+---
+
+## Interswitch API Integration (4 APIs)
+
+| API | Feature | Endpoint |
+|-----|---------|----------|
+| **IPG** | Wallet funding via card payments | `/api/v1/payments/initiate` |
+| **Quickteller** | Bill payments (airtime, utilities, subscriptions) | `/api/v1/payments/bills` |
+| **Transfers** | P2P and cross-bank transfers | `/api/v1/transfers` |
+| **AutoPay** | Recurring savings deductions | `/api/v1/savings/auto-debit` |
+
+**Sandbox Test Card:**
+
+| Card Number | Expiry | CVV | PIN | OTP |
+|-------------|--------|-----|-----|-----|
+| 5060990580000217499 | 03/50 | 111 | 1111 | 123456 |
 
 ---
 
@@ -98,16 +131,16 @@ Purse doesn't just teach finance. It **practices** it — every lesson unlocks r
 
 ```mermaid
 graph TB
-    subgraph Client["Mobile App — React Native"]
+    subgraph Client["Mobile/Web App — React Native (Expo)"]
         UI["UI Layer<br/>(Gamified Modules, Dashboard)"]
         State["State Management<br/>(Redux Toolkit)"]
-        Offline["Offline Storage<br/>(SQLite + AsyncStorage)"]
+        Themes["Dual Theme System<br/>(Lavender+Black / Pink+White)"]
     end
 
     subgraph Backend["Backend — Node.js + Express"]
         API["REST API Gateway"]
         Auth["Auth Service<br/>(JWT + OTP)"]
-        AIEngine["AI Engine<br/>(TF Lite + OpenAI)"]
+        AIEngine["AI Advisor<br/>(OpenAI)"]
         PayService["Payment Service"]
         WAGService["WAG Manager"]
     end
@@ -121,13 +154,11 @@ graph TB
 
     subgraph Chain["Blockchain — Polygon L2"]
         SC["Smart Contracts<br/>(Savings Ledger)"]
-        Verify["Transaction Verification"]
     end
 
     subgraph Data["Data Layer"]
-        DB[("PostgreSQL")]
-        Cache[("Redis")]
-        ML["ML Model Store"]
+        DB[("PostgreSQL<br/>(Neon)")]
+        Cache[("Redis<br/>(Upstash)")]
     end
 
     Client -->|HTTPS| Backend
@@ -139,10 +170,20 @@ graph TB
     PayService --> AP
     PayService --> TF
     WAGService --> SC
-    AIEngine --> ML
 ```
 
 > Full architecture with detailed flow diagrams: [ARCHITECTURE.md](ARCHITECTURE.md)
+
+---
+
+## Live Demo
+
+| Platform | Link |
+|----------|------|
+| **Web App** | [https://purse-app-zeta.vercel.app](https://purse-app-zeta.vercel.app) |
+| **API Server** | [https://interswitch-2026-production.up.railway.app](https://interswitch-2026-production.up.railway.app) |
+
+**Demo Login:** Use any Nigerian phone number (e.g., `08012345678`). OTP code `000000` bypasses verification in sandbox mode.
 
 ---
 
@@ -151,87 +192,46 @@ graph TB
 ### Prerequisites
 
 - Node.js >= 18
-- npm or yarn
-- React Native CLI / Expo CLI
-- PostgreSQL 15+
-- Redis
+- npm
+- Expo CLI (`npx expo`)
+- PostgreSQL (or Neon free tier)
+- Redis (or Upstash free tier)
 - Interswitch Developer Account ([Sign up here](https://developer.interswitchgroup.com))
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-team/purse.git
-cd purse
+git clone https://github.com/Sage-senpai/interswitch-2026.git
+cd interswitch-2026
 ```
 
-### 2. Environment Setup
+### 2. Backend Setup
 
 ```bash
-cp .env.example .env
-```
-
-Configure your `.env` with Interswitch sandbox credentials:
-
-```env
-# Interswitch Sandbox
-ISW_CLIENT_ID=your_sandbox_client_id
-ISW_SECRET_KEY=your_sandbox_secret_key
-ISW_PASSPHRASE=your_sandbox_passphrase
-ISW_BASE_URL=https://qa.interswitchng.com
-ISW_PAYMENT_URL=https://qa.interswitchng.com/collections/api/v1/pay
-
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/purse_db
-REDIS_URL=redis://localhost:6379
-
-# AI
-OPENAI_API_KEY=your_openai_key
-
-# Blockchain (Polygon Mumbai Testnet)
-POLYGON_RPC_URL=https://rpc-mumbai.maticvigil.com
-WALLET_PRIVATE_KEY=your_testnet_wallet_key
-```
-
-### 3. Install & Run
-
-```bash
-# Backend
 cd server
+cp .env.example .env
+# Fill in your credentials (see .env.example for all required vars)
 npm install
-npm run migrate
+npx prisma db push
+npm run db:seed    # Seeds 12 lessons + 7 WAG communities
 npm run dev
-
-# Mobile App (new terminal)
-cd client
-npm install
-npx expo start
 ```
 
-### 4. Test Interswitch Integration
+### 3. Client Setup
 
-Use Interswitch sandbox test cards:
+```bash
+cd client
+npm install --legacy-peer-deps
+npx expo start --offline
+# Press 'w' for web, or scan QR with Expo Go
+```
 
-| Card Number | Expiry | CVV | PIN | OTP |
-|-------------|--------|-----|-----|-----|
-| 5060990580000217499 | 03/50 | 111 | 1111 | 123456 |
+### 4. Test Interswitch Payments
 
-> See [Interswitch Developer Docs](https://developer.interswitchgroup.com) for full sandbox guide.
-
----
-
-## Screenshots
-
-<div align="center">
-
-| Onboarding | Lessons | Savings Dashboard |
-|:---:|:---:|:---:|
-| <img src="docs/screenshots/onboarding.png" width="200"/> | <img src="docs/screenshots/lessons.png" width="200"/> | <img src="docs/screenshots/savings.png" width="200"/> |
-
-| AI Advisor | WAG Group | Payments |
-|:---:|:---:|:---:|
-| <img src="docs/screenshots/ai-advisor.png" width="200"/> | <img src="docs/screenshots/wag-group.png" width="200"/> | <img src="docs/screenshots/payments.png" width="200"/> |
-
-</div>
+1. Navigate to **Fund Wallet**
+2. Enter an amount (e.g., ₦5,000)
+3. Use sandbox test card: `5060990580000217499` / `03/50` / `111` / `1111`
+4. OTP: `123456` if prompted
 
 ---
 
@@ -250,10 +250,8 @@ Use Interswitch sandbox test cards:
 
 | Name | Role | Contributions |
 |------|------|--------------|
-| [Member 1] | Full-Stack Developer | Backend API, Interswitch integration, blockchain |
-| [Member 2] | Frontend / Mobile Developer | React Native app, UI/UX implementation |
-| [Member 3] | AI / ML Engineer | Financial advisor model, NLP, recommendation engine |
-| [Member 4] | Product & Design | UX research, wireframes, user testing, documentation |
+| **Anyadike Divine Chigozirim** | Full-Stack Developer & Team Lead | Built the entire codebase — backend API (Node.js + Express + Prisma), frontend app (React Native/Expo), Interswitch payment integration (IPG, Quickteller, AutoPay, Transfers), database schema design, dual theme system (lavender+black / pink+white), responsive desktop layout, glassmorphism UI, gamified lesson system, WAG community features, AI advisor integration, wallet funding flow, bill payments, P2P transfers, savings goals, financial tools (health score, budget tracker, emergency calculator, referral system), transaction history, onboarding flow, authentication (JWT + OTP), deployment setup (Vercel + Railway + Neon + Upstash), all 17+ app screens |
+| **Emmanuella Ekobosowo** | Product Manager & Research Lead | Market research on Nigerian women's financial inclusion landscape, analysis of NFWP-SU and EmpowerHER programs, user persona development for rural women, feature prioritization and product roadmap, competitive analysis (HerVest, PiggyVest, M-Pesa), hackathon compliance review, documentation of project decisions, brainstorming sessions on WAG digitization strategy, UI/UX feedback and testing, pitch preparation and demo flow planning |
 
 ---
 
