@@ -44,6 +44,7 @@ function AppContent() {
         <Stack.Screen name="wag/[id]" options={{ title: 'WAG Group' }} />
         <Stack.Screen name="wag/create" options={{ title: 'Create WAG' }} />
         <Stack.Screen name="ai/chat" options={{ title: 'AI Advisor' }} />
+        <Stack.Screen name="docs/index" options={{ title: 'Documentation', headerShown: false }} />
       </Stack>
     </>
   );

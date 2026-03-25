@@ -104,6 +104,9 @@ export const paymentAPI = {
 
   getPaymentStatus: (reference: string) =>
     api.get(`/payments/status/${reference}`),
+
+  processCallback: (data: { resp: string; txnref: string; payRef?: string; apprAmt?: string }) =>
+    api.post('/payments/callback', data),
 };
 
 // ─── Transfers ───────────────────────────────────────────

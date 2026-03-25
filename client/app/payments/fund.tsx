@@ -63,11 +63,23 @@ export default function FundWalletScreen() {
             cust_id: config.cust_id,
             site_redirect_url: config.site_redirect_url,
             mode: 'TEST',
-            onComplete: (response: any) => {
-              if (response.resp === '00') {
-                alert(`Payment successful! Ref: ${data.transactionRef}`);
+            onComplete: async (response: any) => {
+              // Send result to our server to credit wallet
+              try {
+                await paymentAPI.processCallback({
+                  resp: response.resp || response.ResponseCode,
+                  txnref: data.transactionRef,
+                  payRef: response.payRef || response.PaymentReference,
+                  apprAmt: response.apprAmt || String(numAmount * 100),
+                });
+              } catch (e) {
+                console.error('Callback processing error:', e);
+              }
+
+              if (response.resp === '00' || response.ResponseCode === '00') {
+                alert(`Payment successful! N${numAmount} added to your wallet.`);
               } else {
-                alert(`Payment was not completed. Code: ${response.resp}`);
+                alert(`Payment was not completed. Code: ${response.resp || response.ResponseCode}`);
               }
               router.back();
             },

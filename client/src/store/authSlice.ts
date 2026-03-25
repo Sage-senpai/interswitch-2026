@@ -57,7 +57,17 @@ export const verifyOTP = createAsyncThunk(
 export const loadAuth = createAsyncThunk('auth/load', async () => {
   const token = await storage.getItemAsync('authToken');
   if (!token) return null;
-  return { token };
+
+  // Fetch user profile to restore full auth state
+  try {
+    const { default: api } = await import('../services/api');
+    const res = await api.get('/users/me');
+    return { token, user: res.data.data };
+  } catch {
+    // Token expired or invalid — clear it
+    await storage.deleteItemAsync('authToken');
+    return null;
+  }
 });
 
 export const logout = createAsyncThunk('auth/logout', async () => {
@@ -116,6 +126,9 @@ const authSlice = createSlice({
         if (action.payload) {
           state.token = action.payload.token;
           state.isAuthenticated = true;
+          if (action.payload.user) {
+            state.user = action.payload.user;
+          }
         }
       })
       // Logout

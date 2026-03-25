@@ -250,11 +250,11 @@ export default function WelcomeScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.heroBtnOutline}
-                onPress={() => router.push('/(auth)/login?mode=login')}
+                onPress={() => router.push('/docs')}
                 activeOpacity={0.85}
               >
-                <Ionicons name="play-circle-outline" size={20} color="#fff" />
-                <Text style={styles.heroBtnOutlineText}>Watch Demo</Text>
+                <Ionicons name="document-text-outline" size={20} color="#fff" />
+                <Text style={styles.heroBtnOutlineText}>Read Docs</Text>
               </TouchableOpacity>
             </View>
 

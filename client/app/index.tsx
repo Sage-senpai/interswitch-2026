@@ -33,9 +33,11 @@ export default function SplashScreen() {
     ).start();
 
     const init = async () => {
-      await dispatch(loadAuth());
+      const result = await dispatch(loadAuth());
       setTimeout(() => {
-        if (isAuthenticated) {
+        // Check the result directly — not the stale selector
+        const loggedIn = result.payload !== null;
+        if (loggedIn) {
           router.replace('/(tabs)');
         } else {
           router.replace('/(auth)/welcome');
