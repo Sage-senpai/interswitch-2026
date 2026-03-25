@@ -60,7 +60,7 @@ const SLIDES: OnboardingSlide[] = [
   },
 ];
 
-function Dot({ index, activeIndex }: { index: number; activeIndex: Animated.SharedValue<number> }) {
+function Dot({ index, activeIndex }: { index: number; activeIndex: { value: number } }) {
   const { colors } = useTheme();
 
   const animatedStyle = useAnimatedStyle(() => {
