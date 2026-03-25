@@ -114,9 +114,18 @@ export default function HomeScreen() {
 
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
             <Text style={{ fontSize: FontSize.sm, color: 'rgba(255,255,255,0.65)', fontWeight: '500' }}>Total Balance</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 50 }}>
-              <Ionicons name="shield-checkmark" size={12} color="rgba(255,255,255,0.7)" />
-              <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', fontWeight: '600' }}>Secured</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <TouchableOpacity
+                onPress={onRefresh}
+                activeOpacity={0.6}
+                style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Ionicons name="refresh" size={14} color="rgba(255,255,255,0.8)" />
+              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 50 }}>
+                <Ionicons name="shield-checkmark" size={12} color="rgba(255,255,255,0.7)" />
+                <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', fontWeight: '600' }}>Secured</Text>
+              </View>
             </View>
           </View>
 
@@ -160,9 +169,13 @@ export default function HomeScreen() {
           { value: stats.wagsJoined, label: 'WAGs', icon: 'people', color: '#66BB6A' },
         ].map((stat) => (
           <View key={stat.label} style={{
-            flex: 1, backgroundColor: colors.surface, borderRadius: 14,
+            flex: 1,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.7)',
+            borderRadius: 14,
             padding: Spacing.sm + 4, alignItems: 'center',
-            borderWidth: 1, borderColor: colors.border,
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+            ...(Platform.OS === 'web' ? { backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any : {}),
           }}>
             <View style={{
               width: 32, height: 32, borderRadius: 10,
@@ -187,10 +200,11 @@ export default function HomeScreen() {
           onPress={() => router.push('/(tabs)/learn')}
           style={{
             flexDirection: 'row', alignItems: 'center',
-            backgroundColor: isDark ? colors.surface : colors.primary + '0D',
+            backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.7)',
             borderRadius: 16, padding: Spacing.md, marginBottom: Spacing.lg,
-            borderWidth: 1, borderColor: isDark ? colors.border : colors.primary + '20',
+            borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
             gap: Spacing.sm,
+            ...(Platform.OS === 'web' ? { backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any : {}),
           }}
         >
           <View style={{
@@ -237,11 +251,13 @@ export default function HomeScreen() {
               onPress={() => router.push(`/savings/${goal.id}`)}
               activeOpacity={0.8}
               style={{
-                backgroundColor: colors.surface, borderRadius: 14,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.7)',
+                borderRadius: 14,
                 padding: Spacing.md, marginBottom: Spacing.sm,
-                borderWidth: 1, borderColor: colors.border,
+                borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
                 borderLeftWidth: 4,
                 borderLeftColor: goal.progress >= 100 ? colors.success : colors.primary,
+                ...(Platform.OS === 'web' ? { backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any : {}),
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.sm }}>
@@ -268,9 +284,11 @@ export default function HomeScreen() {
           <View style={isDesktop ? { flexDirection: 'row', gap: Spacing.sm } : undefined}>
             {insights.slice(0, isDesktop ? 3 : 2).map((insight: any, index: number) => (
               <View key={index} style={{
-                backgroundColor: colors.surface, borderRadius: 14, padding: Spacing.md,
-                borderWidth: 1, borderColor: colors.border,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.7)',
+                borderRadius: 14, padding: Spacing.md,
+                borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
                 marginBottom: Spacing.sm, ...(isDesktop ? { flex: 1 } : {}),
+                ...(Platform.OS === 'web' ? { backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any : {}),
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: colors.primary + '15', alignItems: 'center', justifyContent: 'center' }}>

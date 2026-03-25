@@ -157,11 +157,11 @@ export default function LearnScreen() {
               activeOpacity={0.8}
               style={[
                 {
-                  backgroundColor: colors.surface,
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.7)',
                   borderRadius: 16, padding: Spacing.md + 2,
-                  borderWidth: 1, borderColor: colors.border,
+                  borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
                   borderLeftWidth: 4, borderLeftColor: catColor,
-                  ...(Platform.OS === 'web' ? { transition: 'transform 0.2s, box-shadow 0.2s' } : {}),
+                  ...(Platform.OS === 'web' ? { backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', transition: 'transform 0.2s, box-shadow 0.2s' } as any : {}),
                 },
                 isDesktop ? { width: `${100 / gridColumns - 2}%` as any } : undefined,
               ]}
