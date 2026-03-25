@@ -12,9 +12,10 @@ import { useResponsive } from '../../src/hooks/useResponsive';
 import { FontSize, Spacing, BorderRadius } from '../../src/constants/theme';
 
 // Free Unsplash images — African women empowerment
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1531545514256-b1400bc00f31?w=1400&q=80';
-const ABOUT_IMAGE = 'https://images.unsplash.com/photo-1573497491208-6b1acb260507?w=800&q=80';
-const CTA_IMAGE = 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1400&q=80';
+// Free Unsplash: African women in business, learning, and community
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1509099896299-af46ad97ff57?w=1400&q=80'; // Women in group workshop
+const ABOUT_IMAGE = 'https://images.unsplash.com/photo-1673334562095-381318c9ed68?w=800&q=80'; // African businesswoman with tablet
+const CTA_IMAGE = 'https://images.unsplash.com/photo-1680878903102-92692799ef36?w=1400&q=80'; // African woman using phone
 
 const SERVICES = [
   { icon: 'book-outline', color: '#7E57C2', title: 'Financial Education', desc: 'Gamified lessons on budgeting, saving & investing — in English, Hausa, Yoruba, Igbo' },
