@@ -1,15 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import {
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  Alert, useWindowDimensions, Platform,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInRight, FadeOutLeft } from 'react-native-reanimated';
 import Button from '../../src/components/Button';
 import Card from '../../src/components/Card';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../src/constants/theme';
+import { useTheme } from '../../src/hooks/useTheme';
+import { FontSize, Spacing, BorderRadius } from '../../src/constants/theme';
 import { lessonAPI } from '../../src/services/api';
 
 export default function LessonDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
+
   const [lesson, setLesson] = useState<any>(null);
   const [currentSection, setCurrentSection] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -25,16 +34,23 @@ export default function LessonDetailScreen() {
 
   if (!lesson) {
     return (
-      <View style={styles.loading}>
-        <Text style={styles.loadingText}>Loading lesson...</Text>
+      <View style={[styles.loading, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.textSecondary }}>Loading lesson...</Text>
       </View>
     );
   }
 
-  const sections = lesson.content?.sections || [];
+  // Handle both formats: flat array or { sections: [...] }
+  const rawContent = lesson.content;
+  const sections: any[] = Array.isArray(rawContent)
+    ? rawContent
+    : rawContent?.sections || [];
+
   const section = sections[currentSection];
   const isLast = currentSection === sections.length - 1;
   const isQuiz = section?.type === 'quiz';
+  const totalSections = sections.length;
+  const progress = totalSections > 0 ? ((currentSection + 1) / totalSections) * 100 : 0;
 
   const handleAnswerQuiz = (index: number) => {
     if (quizAnswered) return;
@@ -55,6 +71,12 @@ export default function LessonDetailScreen() {
     setQuizAnswered(false);
   };
 
+  const handlePrev = () => {
+    setCurrentSection((prev) => prev - 1);
+    setSelectedAnswer(null);
+    setQuizAnswered(false);
+  };
+
   const handleComplete = async () => {
     setCompleting(true);
     try {
@@ -63,186 +85,301 @@ export default function LessonDetailScreen() {
       const res = await lessonAPI.complete(id!, finalScore);
       const data = res.data.data;
 
-      Alert.alert(
-        'Lesson Complete!',
-        `Score: ${finalScore}%\n${data.badge ? `Badge earned: ${data.badge}` : ''}\n${data.rewardMessage || ''}`,
-        [{ text: 'Continue', onPress: () => router.back() }],
-      );
+      if (Platform.OS === 'web') {
+        alert(`Lesson Complete! Score: ${finalScore}%${data?.badge ? ` - Badge: ${data.badge}` : ''}`);
+        router.back();
+      } else {
+        Alert.alert(
+          'Lesson Complete!',
+          `Score: ${finalScore}%\n${data?.badge ? `Badge earned: ${data.badge}` : ''}\n${data?.rewardMessage || ''}`,
+          [{ text: 'Continue', onPress: () => router.back() }],
+        );
+      }
     } catch {
-      Alert.alert('Done!', 'Great job completing this lesson!', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      if (Platform.OS === 'web') {
+        alert('Great job completing this lesson!');
+        router.back();
+      } else {
+        Alert.alert('Done!', 'Great job completing this lesson!', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      }
     }
     setCompleting(false);
   };
 
+  // Get text content from either .body or .content field
+  const getSectionText = (s: any) => s?.body || s?.content || '';
+
   const renderSection = () => {
-    if (!section) return null;
+    if (!section) return <Text style={{ color: colors.textSecondary }}>No content available</Text>;
 
     switch (section.type) {
       case 'text':
-        return <Text style={styles.sectionText}>{section.content}</Text>;
+        return (
+          <Animated.View entering={FadeInRight.duration(300)} key={`s-${currentSection}`}>
+            <Text style={[styles.sectionText, { color: colors.text }]}>
+              {getSectionText(section)}
+            </Text>
+          </Animated.View>
+        );
 
       case 'tip':
         return (
-          <Card style={styles.tipCard}>
-            <View style={styles.tipHeader}>
-              <Ionicons name="bulb" size={20} color={Colors.accent} />
-              <Text style={styles.tipLabel}>Tip</Text>
+          <Animated.View entering={FadeInRight.duration(300)} key={`s-${currentSection}`}>
+            <View style={[styles.specialCard, { backgroundColor: colors.accent + '12', borderColor: colors.accent + '30' }]}>
+              <View style={styles.specialHeader}>
+                <Ionicons name="bulb" size={22} color={colors.accent} />
+                <Text style={[styles.specialLabel, { color: colors.accent }]}>Tip</Text>
+              </View>
+              <Text style={[styles.specialText, { color: colors.text }]}>{getSectionText(section)}</Text>
             </View>
-            <Text style={styles.tipText}>{section.content}</Text>
-          </Card>
-        );
-
-      case 'story':
-        return (
-          <Card style={styles.storyCard}>
-            <View style={styles.tipHeader}>
-              <Text style={{ fontSize: 20 }}>📖</Text>
-              <Text style={styles.storyLabel}>Real Story</Text>
-            </View>
-            <Text style={styles.tipText}>{section.content}</Text>
-          </Card>
-        );
-
-      case 'warning':
-        return (
-          <Card style={styles.warningCard}>
-            <View style={styles.tipHeader}>
-              <Ionicons name="warning" size={20} color={Colors.danger} />
-              <Text style={styles.warningLabel}>Important</Text>
-            </View>
-            <Text style={styles.tipText}>{section.content}</Text>
-          </Card>
-        );
-
-      case 'example':
-        return (
-          <Card style={styles.exampleCard}>
-            <Text style={styles.exampleLabel}>Example</Text>
-            <Text style={styles.tipText}>{section.content}</Text>
-          </Card>
+          </Animated.View>
         );
 
       case 'quiz':
         return (
-          <View>
-            <Text style={styles.quizQuestion}>{section.question}</Text>
+          <Animated.View entering={FadeInRight.duration(300)} key={`s-${currentSection}`}>
+            <View style={[styles.quizBadge, { backgroundColor: colors.primary + '15' }]}>
+              <Ionicons name="help-circle" size={18} color={colors.primary} />
+              <Text style={[styles.quizBadgeText, { color: colors.primary }]}>Quiz Time</Text>
+            </View>
+            <Text style={[styles.quizQuestion, { color: colors.text }]}>{section.question}</Text>
             <View style={styles.quizOptions}>
-              {section.options.map((option: string, index: number) => {
-                let optionStyle: object = styles.quizOption;
-                if (quizAnswered) {
-                  if (index === section.answer) optionStyle = styles.quizCorrect;
-                  else if (index === selectedAnswer) optionStyle = styles.quizWrong;
-                }
+              {section.options?.map((option: string, index: number) => {
+                const isCorrect = quizAnswered && index === section.answer;
+                const isWrong = quizAnswered && index === selectedAnswer && index !== section.answer;
+                const isSelected = index === selectedAnswer;
 
                 return (
                   <TouchableOpacity
                     key={index}
-                    style={[styles.quizOption, quizAnswered && index === section.answer && styles.quizCorrect, quizAnswered && index === selectedAnswer && index !== section.answer && styles.quizWrong]}
+                    style={[
+                      styles.quizOption,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: isCorrect ? colors.success : isWrong ? colors.danger : isSelected ? colors.primary : colors.border,
+                        ...(isCorrect && { backgroundColor: colors.success + '12' }),
+                        ...(isWrong && { backgroundColor: colors.danger + '12' }),
+                      },
+                    ]}
                     onPress={() => handleAnswerQuiz(index)}
                     disabled={quizAnswered}
+                    activeOpacity={0.7}
                   >
-                    <Text style={styles.quizOptionText}>{option}</Text>
-                    {quizAnswered && index === section.answer && (
-                      <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-                    )}
+                    <View style={[
+                      styles.optionLetter,
+                      {
+                        backgroundColor: isCorrect ? colors.success : isWrong ? colors.danger : isSelected ? colors.primary : colors.border,
+                      },
+                    ]}>
+                      <Text style={styles.optionLetterText}>
+                        {String.fromCharCode(65 + index)}
+                      </Text>
+                    </View>
+                    <Text style={[styles.quizOptionText, { color: colors.text }]}>{option}</Text>
+                    {isCorrect && <Ionicons name="checkmark-circle" size={22} color={colors.success} />}
+                    {isWrong && <Ionicons name="close-circle" size={22} color={colors.danger} />}
                   </TouchableOpacity>
                 );
               })}
             </View>
-          </View>
+            {quizAnswered && (
+              <Animated.View entering={FadeInRight.duration(300)} style={[
+                styles.quizFeedback,
+                { backgroundColor: selectedAnswer === section.answer ? colors.success + '12' : colors.danger + '12' },
+              ]}>
+                <Ionicons
+                  name={selectedAnswer === section.answer ? 'checkmark-circle' : 'information-circle'}
+                  size={20}
+                  color={selectedAnswer === section.answer ? colors.success : colors.danger}
+                />
+                <Text style={[styles.quizFeedbackText, { color: colors.text }]}>
+                  {selectedAnswer === section.answer
+                    ? 'Correct! Well done!'
+                    : `The correct answer is ${String.fromCharCode(65 + section.answer)}. Keep learning!`}
+                </Text>
+              </Animated.View>
+            )}
+          </Animated.View>
         );
 
       default:
-        return <Text style={styles.sectionText}>{section.content}</Text>;
+        return (
+          <Text style={[styles.sectionText, { color: colors.text }]}>
+            {getSectionText(section)}
+          </Text>
+        );
     }
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{lesson.title}</Text>
-      <Text style={styles.description}>{lesson.description}</Text>
-
-      {/* Progress */}
-      <View style={styles.progressRow}>
-        <Text style={styles.progressText}>
-          Section {currentSection + 1} of {sections.length}
-        </Text>
-        <View style={styles.progressDots}>
-          {sections.map((_: any, i: number) => (
-            <View
-              key={i}
-              style={[styles.dot, i <= currentSection && styles.dotActive]}
-            />
-          ))}
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={[styles.content, isDesktop && styles.contentDesktop]}
+    >
+      {/* Header */}
+      <View style={styles.lessonHeader}>
+        <View style={[styles.categoryBadge, { backgroundColor: colors.primary + '15' }]}>
+          <Text style={[styles.categoryText, { color: colors.primary }]}>
+            {lesson.category?.replace('_', ' ')}
+          </Text>
+        </View>
+        <View style={styles.metaRow}>
+          <View style={styles.metaItem}>
+            <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+            <Text style={[styles.metaText, { color: colors.textSecondary }]}>{lesson.duration} min</Text>
+          </View>
+          <View style={styles.metaItem}>
+            <Ionicons name="star-outline" size={14} color={colors.textSecondary} />
+            <Text style={[styles.metaText, { color: colors.textSecondary }]}>Difficulty {lesson.difficulty}/5</Text>
+          </View>
+          {lesson.reward > 0 && (
+            <View style={styles.metaItem}>
+              <Ionicons name="gift-outline" size={14} color={colors.accent} />
+              <Text style={[styles.metaText, { color: colors.accent }]}>+N{lesson.reward}</Text>
+            </View>
+          )}
         </View>
       </View>
 
-      {/* Content */}
+      <Text style={[styles.title, { color: colors.text }]}>{lesson.title}</Text>
+      <Text style={[styles.description, { color: colors.textSecondary }]}>{lesson.description}</Text>
+
+      {/* Progress Bar */}
+      <View style={styles.progressContainer}>
+        <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
+          <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: colors.primary }]} />
+        </View>
+        <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>
+          {currentSection + 1} of {totalSections}
+        </Text>
+      </View>
+
+      {/* Content Section */}
       <View style={styles.sectionContainer}>
         {renderSection()}
       </View>
 
       {/* Navigation */}
       <View style={styles.navRow}>
-        {currentSection > 0 && (
-          <Button
-            title="Previous"
-            onPress={() => {
-              setCurrentSection((prev) => prev - 1);
-              setSelectedAnswer(null);
-              setQuizAnswered(false);
-            }}
-            variant="outline"
-            style={{ flex: 1 }}
-          />
-        )}
-        <Button
-          title={isLast ? 'Complete Lesson' : 'Next'}
+        <TouchableOpacity
+          style={[
+            styles.navButton,
+            { borderColor: colors.border, opacity: currentSection > 0 ? 1 : 0.4 },
+          ]}
+          onPress={handlePrev}
+          disabled={currentSection === 0}
+        >
+          <Ionicons name="chevron-back" size={20} color={colors.text} />
+          <Text style={[styles.navButtonText, { color: colors.text }]}>Previous</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.navButton,
+            styles.navButtonPrimary,
+            {
+              backgroundColor: colors.primary,
+              opacity: isQuiz && !quizAnswered ? 0.5 : 1,
+            },
+          ]}
           onPress={handleNext}
-          loading={completing}
-          disabled={isQuiz && !quizAnswered}
-          style={{ flex: 1 }}
-        />
+          disabled={(isQuiz && !quizAnswered) || completing}
+        >
+          <Text style={[styles.navButtonText, { color: '#fff' }]}>
+            {completing ? 'Completing...' : isLast ? 'Complete' : 'Next'}
+          </Text>
+          <Ionicons name={isLast ? 'checkmark' : 'chevron-forward'} size={20} color="#fff" />
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1 },
   content: { padding: Spacing.md, paddingBottom: Spacing.xxl },
+  contentDesktop: { maxWidth: 720, alignSelf: 'center', width: '100%', paddingHorizontal: Spacing.xl },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: Colors.textSecondary },
-  title: { fontSize: FontSize.xxl, fontWeight: '800', color: Colors.text, marginBottom: 4 },
-  description: { fontSize: FontSize.md, color: Colors.textSecondary, marginBottom: Spacing.md },
-  progressRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.lg },
-  progressText: { fontSize: FontSize.sm, color: Colors.textLight },
-  progressDots: { flexDirection: 'row', gap: 6 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.border },
-  dotActive: { backgroundColor: Colors.primary },
+  lessonHeader: { marginBottom: Spacing.md },
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    marginBottom: Spacing.sm,
+  },
+  categoryText: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  metaRow: { flexDirection: 'row', gap: Spacing.md },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  metaText: { fontSize: FontSize.xs },
+  title: { fontSize: FontSize.xxl, fontWeight: '800', marginBottom: 6, lineHeight: 36 },
+  description: { fontSize: FontSize.md, lineHeight: 24, marginBottom: Spacing.lg },
+  progressContainer: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.xl },
+  progressTrack: { flex: 1, height: 6, borderRadius: 3, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 3 },
+  progressLabel: { fontSize: FontSize.xs, minWidth: 50, textAlign: 'right' },
   sectionContainer: { marginBottom: Spacing.xl, minHeight: 200 },
-  sectionText: { fontSize: FontSize.md, color: Colors.text, lineHeight: 26 },
-  tipCard: { backgroundColor: Colors.accentLight + '15', borderColor: Colors.accent + '30' },
-  tipHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.sm },
-  tipLabel: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.accent },
-  tipText: { fontSize: FontSize.md, color: Colors.text, lineHeight: 24 },
-  storyCard: { backgroundColor: Colors.primaryLight + '10', borderColor: Colors.primaryLight + '30' },
-  storyLabel: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.primary },
-  warningCard: { backgroundColor: Colors.dangerLight + '15', borderColor: Colors.danger + '30' },
-  warningLabel: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.danger },
-  exampleCard: { backgroundColor: Colors.surfaceSecondary },
-  exampleLabel: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.primaryDark, marginBottom: Spacing.sm },
-  quizQuestion: { fontSize: FontSize.lg, fontWeight: '700', color: Colors.text, marginBottom: Spacing.md, lineHeight: 28 },
+  sectionText: { fontSize: 16, lineHeight: 28 },
+  specialCard: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+  },
+  specialHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.sm },
+  specialLabel: { fontSize: FontSize.sm, fontWeight: '700' },
+  specialText: { fontSize: FontSize.md, lineHeight: 26 },
+  quizBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+    marginBottom: Spacing.md,
+  },
+  quizBadgeText: { fontSize: FontSize.sm, fontWeight: '700' },
+  quizQuestion: { fontSize: FontSize.lg, fontWeight: '700', marginBottom: Spacing.lg, lineHeight: 28 },
   quizOptions: { gap: Spacing.sm },
   quizOption: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: Colors.surface, borderWidth: 1.5, borderColor: Colors.border,
-    borderRadius: BorderRadius.md, padding: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderWidth: 2,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
   },
-  quizCorrect: { borderColor: Colors.success, backgroundColor: Colors.successLight + '15' },
-  quizWrong: { borderColor: Colors.danger, backgroundColor: Colors.dangerLight + '15' },
-  quizOptionText: { fontSize: FontSize.md, color: Colors.text, flex: 1 },
+  optionLetter: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionLetterText: { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
+  quizOptionText: { fontSize: FontSize.md, flex: 1 },
+  quizFeedback: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+  },
+  quizFeedbackText: { fontSize: FontSize.sm, flex: 1 },
   navRow: { flexDirection: 'row', gap: Spacing.sm },
+  navButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 14,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
+  },
+  navButtonPrimary: { borderWidth: 0 },
+  navButtonText: { fontSize: FontSize.md, fontWeight: '600' },
 });

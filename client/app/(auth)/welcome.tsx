@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Animated, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Animated, Platform, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Button from '../../src/components/Button';
@@ -26,7 +26,7 @@ const STATS = [
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const { isDesktop, isTablet } = useResponsive();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -56,6 +56,18 @@ export default function WelcomeScreen() {
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.scrollContent}
     >
+      {/* Theme Toggle — floating */}
+      <TouchableOpacity
+        onPress={toggleTheme}
+        style={[styles.themeToggle, { backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }]}
+        activeOpacity={0.7}
+      >
+        <Ionicons name={isDark ? 'sunny' : 'moon'} size={18} color={isDark ? colors.accent : colors.primaryDark} />
+        <Text style={[styles.themeToggleText, { color: isDark ? colors.accent : colors.primaryDark }]}>
+          {isDark ? 'Light' : 'Dark'}
+        </Text>
+      </TouchableOpacity>
+
       {/* Hero Section */}
       <View style={[styles.hero, { backgroundColor: isDark ? colors.surface : colors.primaryDark }]}>
         <AfricanPattern width="100%" height="100%" opacity={isDark ? 0.06 : 0.1} variant="ankara" />
@@ -69,27 +81,51 @@ export default function WelcomeScreen() {
           <View style={styles.heroBadge}>
             <Text style={styles.heroBadgeText}>Enyata x Interswitch Buildathon 2026</Text>
           </View>
+
+          {/* Decorative glow */}
+          <View style={[styles.heroGlow, { backgroundColor: colors.primary }]} />
+
           <Text style={[styles.heroTitle, isWide && styles.heroTitleWide]}>
-            Empowering{'\n'}Nigerian Women{'\n'}
-            <Text style={{ color: isDark ? colors.accent : '#FFD700' }}>Financially</Text>
+            Her Money.{'\n'}Her Power.{'\n'}
+            <Text style={{ color: isDark ? colors.accent : '#FFD700' }}>Her Future.</Text>
           </Text>
           <Text style={styles.heroSubtitle}>
-            AI-powered financial literacy, micro-savings, and secure payments — designed for women and girls in rural and underserved communities.
+            AI-powered financial literacy, micro-savings, and secure payments — built for every Nigerian woman and girl ready to take control.
           </Text>
+
+          {/* Trust indicators */}
+          <View style={styles.trustRow}>
+            <View style={styles.trustItem}>
+              <Ionicons name="shield-checkmark" size={16} color="rgba(255,255,255,0.7)" />
+              <Text style={styles.trustText}>Interswitch Secured</Text>
+            </View>
+            <View style={styles.trustDot} />
+            <View style={styles.trustItem}>
+              <Ionicons name="cube" size={16} color="rgba(255,255,255,0.7)" />
+              <Text style={styles.trustText}>Blockchain Verified</Text>
+            </View>
+            <View style={styles.trustDot} />
+            <View style={styles.trustItem}>
+              <Ionicons name="heart" size={16} color="rgba(255,255,255,0.7)" />
+              <Text style={styles.trustText}>Free Forever</Text>
+            </View>
+          </View>
+
           <View style={[styles.heroCTA, isWide && styles.heroCTAWide]}>
             <Button
-              title="Get Started Free"
+              title="Start Your Journey"
               onPress={() => router.push('/(auth)/login?mode=register')}
               size="lg"
               style={[styles.ctaPrimary, { backgroundColor: isDark ? colors.primary : '#FFD700' }]}
-              textStyle={{ color: isDark ? colors.textInverse : '#1A1A2E' }}
+              textStyle={{ color: isDark ? colors.textInverse : '#1A1A2E', fontWeight: '700' }}
+              icon={<Ionicons name="arrow-forward" size={18} color={isDark ? colors.textInverse : '#1A1A2E'} />}
             />
             <Button
-              title="Sign In"
+              title="I Have an Account"
               onPress={() => router.push('/(auth)/login?mode=login')}
               variant="outline"
               size="lg"
-              style={[styles.ctaOutline, { borderColor: 'rgba(255,255,255,0.4)' }]}
+              style={[styles.ctaOutline, { borderColor: 'rgba(255,255,255,0.35)' }]}
               textStyle={{ color: '#FFFFFF' }}
             />
           </View>
@@ -199,6 +235,45 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { flexGrow: 1 },
+
+  // Theme toggle
+  themeToggle: {
+    position: 'absolute',
+    top: Platform.OS === 'web' ? 20 : 50,
+    right: 20,
+    zIndex: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.full,
+  },
+  themeToggleText: { fontSize: FontSize.xs, fontWeight: '700' },
+
+  // Hero glow
+  heroGlow: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    opacity: 0.12,
+    top: -80,
+    right: -60,
+  },
+
+  // Trust row
+  trustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: Spacing.xl,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  trustItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  trustText: { fontSize: FontSize.xs, color: 'rgba(255,255,255,0.65)' },
+  trustDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: 'rgba(255,255,255,0.3)' },
 
   // Hero
   hero: {
