@@ -24,9 +24,13 @@ export class InterswitchBase {
    * Cached in Redis for the duration of token validity.
    */
   async getAccessToken(): Promise<string> {
-    // Check cache first
-    const cached = await redis.get('isw:access_token');
-    if (cached) return cached;
+    // Check cache first (Redis may be unavailable)
+    try {
+      const cached = await redis.get('isw:access_token');
+      if (cached) return cached;
+    } catch {
+      // Redis unavailable — proceed without cache
+    }
 
     try {
       const response = await this.client.post<ISWTokenResponse>(
@@ -42,8 +46,10 @@ export class InterswitchBase {
 
       const { access_token, expires_in } = response.data;
 
-      // Cache token with a 60-second buffer before expiry
-      await redis.setex('isw:access_token', expires_in - 60, access_token);
+      // Cache token (ignore Redis errors)
+      try {
+        await redis.setex('isw:access_token', expires_in - 60, access_token);
+      } catch {}
 
       return access_token;
     } catch (error) {

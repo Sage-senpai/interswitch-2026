@@ -4,6 +4,8 @@ export const iswConfig = {
   clientId: env.ISW_CLIENT_ID,
   secretKey: env.ISW_SECRET_KEY,
   passphrase: env.ISW_PASSPHRASE || '',
+  merchantCode: env.ISW_MERCHANT_CODE || 'MX6072',
+  payItemId: env.ISW_PAY_ITEM_ID || '9405967',
   baseUrl: env.ISW_BASE_URL,
 
   endpoints: {
@@ -12,7 +14,7 @@ export const iswConfig = {
 
     // IPG — Collections & Wallet Funding
     purchase: '/api/v2/purchases',
-    paymentStatus: '/api/v2/purchases',
+    paymentStatus: '/collections/api/v1/gettransaction.json',
 
     // Quickteller — Bills
     billerCategories: '/api/v2/quickteller/categorys',
@@ -31,11 +33,16 @@ export const iswConfig = {
     recurringCancel: '/api/v2/recurring/cancel',
   },
 
+  // Inline checkout JS (sandbox)
+  inlineCheckoutUrl: env.ISW_BASE_URL === 'https://qa.interswitchng.com'
+    ? 'https://newwebpay.qa.interswitchng.com/inline-checkout.js'
+    : 'https://newwebpay.interswitchng.com/inline-checkout.js',
+
   // Currency code for Nigerian Naira
   currencyCode: '566',
 
-  // Callback URLs (set per environment)
+  // Callback URL
   callbackUrl: env.NODE_ENV === 'production'
-    ? 'https://api.purse-app.com/api/v1/payments/callback'
+    ? 'https://interswitch-2026-production.up.railway.app/api/v1/payments/callback'
     : 'http://localhost:3000/api/v1/payments/callback',
 };

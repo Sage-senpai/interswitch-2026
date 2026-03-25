@@ -52,27 +52,35 @@ export class IPGService extends InterswitchBase {
       },
     });
 
-    // Build IPG payment data
+    // Build IPG payment data for Interswitch inline checkout
     const paymentData = {
-      merchant_code: iswConfig.clientId,
-      pay_item_id: 'Default_Payable_MX',
+      merchant_code: iswConfig.merchantCode,
+      pay_item_id: iswConfig.payItemId,
       txn_ref: reference,
       amount: amountInKobo,
-      currency: iswConfig.currencyCode,
+      currency: parseInt(iswConfig.currencyCode),
       cust_id: userId,
       site_redirect_url: iswConfig.callbackUrl,
       hash: mac,
+      mode: 'TEST',
     };
 
-    // In production, redirect user to Interswitch payment page
-    // For sandbox, return the data needed to initiate payment
-    const paymentUrl = `${iswConfig.baseUrl}/collections/w/pay`;
-
     return {
-      paymentUrl,
+      paymentUrl: iswConfig.inlineCheckoutUrl,
       transactionRef: reference,
       transactionId: transaction.id,
       paymentData,
+      // Client uses these to call webpayCheckout()
+      checkoutConfig: {
+        merchant_code: iswConfig.merchantCode,
+        pay_item_id: iswConfig.payItemId,
+        txn_ref: reference,
+        amount: parseInt(amountInKobo),
+        currency: parseInt(iswConfig.currencyCode),
+        cust_id: userId,
+        site_redirect_url: iswConfig.callbackUrl,
+        mode: 'TEST',
+      },
     };
   }
 
@@ -146,8 +154,8 @@ export class IPGService extends InterswitchBase {
     try {
       const amountInKobo = Math.round(Number(transaction.amount) * 100).toString();
       const response = await this.get<{ ResponseCode: string; ResponseDescription: string }>(
-        `${iswConfig.endpoints.paymentStatus}/${reference}`,
-        { amount: amountInKobo },
+        iswConfig.endpoints.paymentStatus,
+        { merchantcode: iswConfig.merchantCode, transactionreference: reference, amount: amountInKobo },
       );
 
       return {
