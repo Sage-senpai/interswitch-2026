@@ -1,0 +1,28 @@
+{
+  "short_name": "Purse",
+  "name": "Purse - Financial Empowerment for Nigerian Women",
+  "description": "AI-powered financial literacy, micro-savings, and secure payments built for every Nigerian woman.",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 32x32 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#7E57C2",
+  "background_color": "#0A0A0F",
+  "categories": ["finance", "education"]
+}
