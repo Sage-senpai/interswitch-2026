@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Platform,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Card from '../../src/components/Card';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useResponsive } from '../../src/hooks/useResponsive';
 import { FontSize, Spacing, BorderRadius } from '../../src/constants/theme';
@@ -19,6 +20,7 @@ const CATEGORIES = [
 ];
 
 const DIFFICULTY_LABELS = ['', 'Beginner', 'Easy', 'Medium', 'Advanced', 'Expert'];
+
 const CATEGORY_COLORS: Record<string, string> = {
   BUDGETING: '#3B82F6',
   SAVING: '#10B981',
@@ -30,14 +32,22 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export default function LearnScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { isDesktop, contentMaxWidth, gridColumns } = useResponsive();
   const [lessons, setLessons] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState('');
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const headerSlide = useRef(new Animated.Value(20)).current;
+
   useEffect(() => {
-    fetchLessons();
-  }, [activeCategory]);
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.timing(headerSlide, { toValue: 0, duration: 600, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  useEffect(() => { fetchLessons(); }, [activeCategory]);
 
   const fetchLessons = async () => {
     try {
@@ -53,152 +63,190 @@ export default function LearnScreen() {
   };
 
   const completedCount = lessons.filter((l) => l.completed).length;
-  const s = useMemo(() => createStyles(colors, isDesktop), [colors, isDesktop]);
+  const progressPct = lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0;
 
   return (
     <ScrollView
-      style={s.container}
+      style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={[
-        s.content,
-        isDesktop && { maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%' },
+        { padding: isDesktop ? Spacing.xl : Spacing.md, paddingBottom: 80 },
+        isDesktop && { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' },
       ]}
     >
-      {/* Progress Banner */}
-      <Card variant="accent" style={s.progressCard}>
-        <Text style={s.progressTitle}>Your Learning Journey</Text>
-        <Text style={s.progressCount}>
-          {completedCount} / {lessons.length} lessons completed
-        </Text>
-        <View style={s.progressBar}>
-          <View
-            style={[
-              s.progressFill,
-              { width: `${lessons.length > 0 ? (completedCount / lessons.length) * 100 : 0}%` },
-            ]}
-          />
+      {/* ── Progress Hero ── */}
+      <Animated.View style={{
+        opacity: fadeAnim,
+        transform: [{ translateY: headerSlide }],
+        borderRadius: 20, overflow: 'hidden',
+        marginBottom: Spacing.lg,
+        backgroundColor: colors.walletBg,
+        padding: Spacing.lg + 4,
+      }}>
+        <View style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: '500', marginBottom: 4 }}>Your Learning Journey</Text>
+            <Text style={{ fontSize: 28, fontWeight: '800', color: '#fff', marginBottom: 4 }}>
+              {completedCount} / {lessons.length}
+            </Text>
+            <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>lessons completed</Text>
+          </View>
+          {/* Circular progress */}
+          <View style={{ width: 70, height: 70, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{
+              width: 70, height: 70, borderRadius: 35,
+              borderWidth: 6, borderColor: 'rgba(255,255,255,0.2)',
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <View style={{
+                position: 'absolute', width: 70, height: 70, borderRadius: 35,
+                borderWidth: 6, borderColor: '#FFD700',
+                borderTopColor: progressPct > 25 ? '#FFD700' : 'transparent',
+                borderRightColor: progressPct > 50 ? '#FFD700' : 'transparent',
+                borderBottomColor: progressPct > 75 ? '#FFD700' : 'transparent',
+                borderLeftColor: 'transparent',
+                transform: [{ rotate: '-45deg' }],
+              }} />
+              <Text style={{ fontSize: 16, fontWeight: '800', color: '#fff' }}>{Math.round(progressPct)}%</Text>
+            </View>
+          </View>
         </View>
-      </Card>
+        {/* Progress bar */}
+        <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 3, marginTop: Spacing.md, overflow: 'hidden' }}>
+          <View style={{ height: '100%', width: `${progressPct}%`, backgroundColor: '#FFD700', borderRadius: 3 }} />
+        </View>
+      </Animated.View>
 
-      {/* Category Filter */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.categories}>
+      {/* ── Category Filter ── */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: Spacing.md }}>
         {CATEGORIES.map((cat) => {
           const active = activeCategory === cat.key;
           return (
             <TouchableOpacity
               key={cat.key}
-              style={[
-                s.categoryChip,
-                active && { backgroundColor: colors.primary, borderColor: colors.primary },
-              ]}
               onPress={() => setActiveCategory(cat.key)}
+              activeOpacity={0.7}
+              style={{
+                flexDirection: 'row', alignItems: 'center', gap: 6,
+                paddingHorizontal: 16, paddingVertical: 10,
+                borderRadius: 50, marginRight: 8,
+                backgroundColor: active ? colors.primary : colors.surface,
+                borderWidth: active ? 0 : 1, borderColor: colors.border,
+                ...(active && Platform.OS === 'web' ? { boxShadow: `0 2px 12px ${colors.primary}40` } : {}),
+              }}
             >
-              <Ionicons
-                name={cat.icon as any}
-                size={16}
-                color={active ? colors.textInverse : colors.textSecondary}
-              />
-              <Text style={[s.categoryText, active && { color: colors.textInverse }]}>
-                {cat.label}
-              </Text>
+              <Ionicons name={cat.icon as any} size={15} color={active ? '#fff' : colors.textSecondary} />
+              <Text style={{ fontSize: 13, fontWeight: '600', color: active ? '#fff' : colors.textSecondary }}>{cat.label}</Text>
             </TouchableOpacity>
           );
         })}
       </ScrollView>
 
-      {/* Lessons Grid */}
-      <View style={[s.lessonsGrid, isDesktop && { flexDirection: 'row', flexWrap: 'wrap' }]}>
-        {lessons.map((lesson) => (
-          <Card
-            key={lesson.id}
-            onPress={() => router.push(`/lessons/${lesson.id}`)}
-            style={[
-              s.lessonCard,
-              isDesktop ? { width: `${100 / gridColumns - 2}%` } : undefined,
-            ]}
-          >
-            <View style={[s.categoryBadge, { backgroundColor: CATEGORY_COLORS[lesson.category] || colors.primary }]}>
-              <Text style={s.categoryBadgeText}>{lesson.category.replace('_', ' ')}</Text>
-            </View>
+      {/* ── Lessons Grid ── */}
+      <View style={[
+        { gap: Spacing.sm },
+        isDesktop && { flexDirection: 'row', flexWrap: 'wrap' },
+      ]}>
+        {lessons.map((lesson, idx) => {
+          const catColor = CATEGORY_COLORS[lesson.category] || colors.primary;
 
-            <Text style={s.lessonTitle}>{lesson.title}</Text>
-
-            <View style={s.lessonMeta}>
-              <View style={s.metaItem}>
-                <Ionicons name="time-outline" size={14} color={colors.textLight} />
-                <Text style={s.metaText}>{lesson.duration} min</Text>
+          return (
+            <TouchableOpacity
+              key={lesson.id}
+              onPress={() => router.push(`/lessons/${lesson.id}`)}
+              activeOpacity={0.8}
+              style={[
+                {
+                  backgroundColor: colors.surface,
+                  borderRadius: 16, padding: Spacing.md + 2,
+                  borderWidth: 1, borderColor: colors.border,
+                  borderLeftWidth: 4, borderLeftColor: catColor,
+                  ...(Platform.OS === 'web' ? { transition: 'transform 0.2s, box-shadow 0.2s' } : {}),
+                },
+                isDesktop ? { width: `${100 / gridColumns - 2}%` as any } : undefined,
+              ]}
+            >
+              {/* Top row: category + reward */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <View style={{ backgroundColor: catColor + '18', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 50 }}>
+                  <Text style={{ fontSize: 10, color: catColor, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    {lesson.category?.replace('_', ' ')}
+                  </Text>
+                </View>
+                {lesson.reward > 0 && !lesson.completed && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                    <Ionicons name="gift" size={12} color={colors.accent} />
+                    <Text style={{ fontSize: 11, color: colors.accent, fontWeight: '700' }}>+N{lesson.reward}</Text>
+                  </View>
+                )}
               </View>
-              <View style={s.metaItem}>
-                <Ionicons name="bar-chart-outline" size={14} color={colors.textLight} />
-                <Text style={s.metaText}>{DIFFICULTY_LABELS[lesson.difficulty]}</Text>
-              </View>
-            </View>
 
-            {lesson.badge && (
-              <View style={s.badgeRow}>
-                <Text style={s.badgeIcon}>🏅</Text>
-                <Text style={s.badgeText}>{lesson.badge}</Text>
-              </View>
-            )}
+              {/* Title */}
+              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 10, lineHeight: 22 }}>
+                {lesson.title}
+              </Text>
 
-            {lesson.completed && (
-              <View style={s.completedBadge}>
-                <Ionicons name="checkmark-circle" size={18} color={colors.success} />
-                <Text style={s.completedText}>Completed</Text>
+              {/* Meta */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name="time-outline" size={13} color={colors.textLight} />
+                  <Text style={{ fontSize: 12, color: colors.textLight }}>{lesson.duration} min</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name="bar-chart-outline" size={13} color={colors.textLight} />
+                  <Text style={{ fontSize: 12, color: colors.textLight }}>{DIFFICULTY_LABELS[lesson.difficulty]}</Text>
+                </View>
               </View>
-            )}
 
-            {lesson.reward > 0 && !lesson.completed && (
-              <Text style={s.rewardText}>Earn ₦{lesson.reward} on completion</Text>
-            )}
-          </Card>
-        ))}
+              {/* Badge */}
+              {lesson.badge && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                  <Text style={{ fontSize: 13 }}>🏅</Text>
+                  <Text style={{ fontSize: 12, color: colors.textSecondary, fontWeight: '500' }}>{lesson.badge}</Text>
+                </View>
+              )}
+
+              {/* Completed */}
+              {lesson.completed && (
+                <View style={{
+                  flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6,
+                  backgroundColor: colors.success + '12', paddingHorizontal: 10, paddingVertical: 5,
+                  borderRadius: 50, alignSelf: 'flex-start',
+                }}>
+                  <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                  <Text style={{ fontSize: 12, color: colors.success, fontWeight: '700' }}>Completed</Text>
+                </View>
+              )}
+
+              {/* Start arrow */}
+              {!lesson.completed && (
+                <View style={{
+                  position: 'absolute', bottom: 12, right: 12,
+                  width: 30, height: 30, borderRadius: 15,
+                  backgroundColor: catColor + '12',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Ionicons name="play" size={14} color={catColor} />
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </View>
+
+      {lessons.length === 0 && (
+        <View style={{ alignItems: 'center', paddingVertical: 60 }}>
+          <View style={{
+            width: 80, height: 80, borderRadius: 40,
+            backgroundColor: colors.primary + '12',
+            alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.md,
+          }}>
+            <Ionicons name="book-outline" size={36} color={colors.primary} />
+          </View>
+          <Text style={{ fontSize: FontSize.lg, fontWeight: '700', color: colors.text, marginBottom: 6 }}>No lessons found</Text>
+          <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary, textAlign: 'center' }}>Try a different category filter</Text>
+        </View>
+      )}
     </ScrollView>
   );
-}
-
-function createStyles(colors: any, isDesktop: boolean) {
-  return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    content: { padding: isDesktop ? Spacing.xl : Spacing.md, paddingBottom: Spacing.xxl },
-    progressCard: { marginBottom: Spacing.md, padding: Spacing.lg },
-    progressTitle: { fontSize: FontSize.md, color: colors.walletTextMuted, marginBottom: 4 },
-    progressCount: { fontSize: FontSize.xl, fontWeight: '800', color: colors.walletText, marginBottom: Spacing.sm },
-    progressBar: { height: 8, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: BorderRadius.full, overflow: 'hidden' },
-    progressFill: { height: '100%', backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: BorderRadius.full },
-    categories: { marginBottom: Spacing.md },
-    categoryChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
-      borderRadius: BorderRadius.full,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-      marginRight: Spacing.sm,
-      gap: 6,
-    },
-    categoryText: { fontSize: FontSize.sm, color: colors.textSecondary, fontWeight: '500' },
-    lessonsGrid: { gap: Spacing.sm },
-    lessonCard: { padding: Spacing.md },
-    categoryBadge: {
-      alignSelf: 'flex-start',
-      paddingHorizontal: Spacing.sm,
-      paddingVertical: 3,
-      borderRadius: BorderRadius.sm,
-      marginBottom: Spacing.sm,
-    },
-    categoryBadgeText: { fontSize: 10, color: '#FFFFFF', fontWeight: '700', textTransform: 'uppercase' },
-    lessonTitle: { fontSize: FontSize.md, fontWeight: '700', color: colors.text, marginBottom: Spacing.sm },
-    lessonMeta: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.sm },
-    metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    metaText: { fontSize: FontSize.xs, color: colors.textLight },
-    badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
-    badgeIcon: { fontSize: 14 },
-    badgeText: { fontSize: FontSize.xs, color: colors.accent, fontWeight: '600' },
-    completedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-    completedText: { fontSize: FontSize.sm, color: colors.success, fontWeight: '600' },
-    rewardText: { fontSize: FontSize.xs, color: colors.accent, fontWeight: '600', marginTop: 4 },
-  });
 }
