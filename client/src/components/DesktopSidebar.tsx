@@ -28,6 +28,14 @@ const quickActions: NavItem[] = [
   { label: 'AI Advisor', icon: 'chatbubble-ellipses-outline', iconActive: 'chatbubble-ellipses', route: '/ai/chat' },
 ];
 
+const toolItems: NavItem[] = [
+  { label: 'Transaction History', icon: 'receipt-outline', iconActive: 'receipt', route: '/transactions' },
+  { label: 'Budget Tracker', icon: 'calculator-outline', iconActive: 'calculator', route: '/budget' },
+  { label: 'Health Score', icon: 'heart-outline', iconActive: 'heart', route: '/tools/health-score' },
+  { label: 'Emergency Fund', icon: 'shield-checkmark-outline', iconActive: 'shield-checkmark', route: '/tools/emergency-calc' },
+  { label: 'Invite Friends', icon: 'gift-outline', iconActive: 'gift', route: '/tools/referral' },
+];
+
 export default function DesktopSidebar() {
   const { colors, isDark, toggleTheme } = useTheme();
   const { sidebarWidth } = useResponsive();
@@ -109,6 +117,43 @@ export default function DesktopSidebar() {
             <Text style={[styles.navText, { color: colors.textSecondary }]}>{item.label}</Text>
           </TouchableOpacity>
         ))}
+      </View>
+
+      {/* Tools */}
+      <View style={styles.navSection}>
+        <Text style={[styles.navLabel, { color: colors.textLight }]}>TOOLS</Text>
+        {toolItems.map((item) => {
+          const active = isActive(item.route);
+          return (
+            <TouchableOpacity
+              key={item.route}
+              style={[
+                styles.navItem,
+                active && { backgroundColor: colors.accentLight },
+              ]}
+              onPress={() => router.push(item.route as any)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={active ? item.iconActive : item.icon}
+                size={20}
+                color={active ? colors.primary : colors.textSecondary}
+              />
+              <Text
+                style={[
+                  styles.navText,
+                  { color: active ? colors.primary : colors.textSecondary },
+                  active && styles.navTextActive,
+                ]}
+              >
+                {item.label}
+              </Text>
+              {active && (
+                <View style={[styles.activeIndicator, { backgroundColor: colors.primary }]} />
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* Bottom Section */}

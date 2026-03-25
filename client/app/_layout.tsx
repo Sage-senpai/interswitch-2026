@@ -45,6 +45,11 @@ function AppContent() {
         <Stack.Screen name="wag/create" options={{ title: 'Create WAG' }} />
         <Stack.Screen name="ai/chat" options={{ title: 'AI Advisor' }} />
         <Stack.Screen name="docs/index" options={{ title: 'Documentation', headerShown: false }} />
+        <Stack.Screen name="transactions/index" options={{ headerShown: false }} />
+        <Stack.Screen name="budget/index" options={{ headerShown: false }} />
+        <Stack.Screen name="tools/health-score" options={{ headerShown: false }} />
+        <Stack.Screen name="tools/referral" options={{ headerShown: false }} />
+        <Stack.Screen name="tools/emergency-calc" options={{ headerShown: false }} />
       </Stack>
     </>
   );
