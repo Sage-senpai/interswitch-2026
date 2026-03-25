@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, Alert, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import Button from '../../src/components/Button';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../src/constants/theme';
+import { FontSize, Spacing, BorderRadius } from '../../src/constants/theme';
+import { useTheme } from '../../src/hooks/useTheme';
 import { savingsAPI } from '../../src/services/api';
 
 const CATEGORIES = [
@@ -16,6 +17,7 @@ const CATEGORIES = [
 
 export default function NewGoalScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [target, setTarget] = useState('');
@@ -31,49 +33,100 @@ export default function NewGoalScreen() {
         category,
         target: Number(target),
       });
-      Alert.alert('Goal Created!', res.data.data.message, [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      if (Platform.OS === 'web') {
+        alert(res.data.data.message);
+        router.back();
+      } else {
+        Alert.alert('Goal Created!', res.data.data.message, [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      }
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.error?.message || 'Failed to create goal');
+      if (Platform.OS === 'web') {
+        alert(err.response?.data?.error?.message || 'Failed to create goal');
+      } else {
+        Alert.alert('Error', err.response?.data?.error?.message || 'Failed to create goal');
+      }
     }
     setLoading(false);
   };
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.heading}>What are you saving for?</Text>
+  const glassCard = {
+    backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.7)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+    borderRadius: 16,
+    ...(Platform.OS === 'web'
+      ? ({ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } as any)
+      : {}),
+  };
 
-      <Text style={styles.label}>Goal Name</Text>
+  const glassInput = {
+    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.6)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    fontSize: FontSize.md,
+    color: colors.text,
+    ...(Platform.OS === 'web'
+      ? ({ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } as any)
+      : {}),
+  };
+
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{ padding: Spacing.md, paddingBottom: Spacing.xxl }}
+    >
+      <Text style={[styles.heading, { color: colors.text }]}>What are you saving for?</Text>
+
+      <Text style={[styles.label, { color: colors.text }]}>Goal Name</Text>
       <TextInput
-        style={styles.input}
+        style={glassInput}
         placeholder="e.g. Amina's school fees"
-        placeholderTextColor={Colors.textLight}
+        placeholderTextColor={colors.textLight}
         value={name}
         onChangeText={setName}
       />
 
-      <Text style={styles.label}>Category</Text>
+      <Text style={[styles.label, { color: colors.text }]}>Category</Text>
       <View style={styles.categories}>
-        {CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat.key}
-            style={[styles.catCard, category === cat.key && styles.catSelected]}
-            onPress={() => setCategory(cat.key)}
-          >
-            <Text style={styles.catIcon}>{cat.icon}</Text>
-            <Text style={[styles.catLabel, category === cat.key && styles.catLabelSelected]}>
-              {cat.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {CATEGORIES.map((cat) => {
+          const isSelected = category === cat.key;
+          return (
+            <TouchableOpacity
+              key={cat.key}
+              style={[
+                styles.catCard,
+                glassCard,
+                isSelected && {
+                  backgroundColor: colors.primary + '20',
+                  borderColor: colors.primary,
+                },
+              ]}
+              onPress={() => setCategory(cat.key)}
+            >
+              <Text style={styles.catIcon}>{cat.icon}</Text>
+              <Text
+                style={[
+                  styles.catLabel,
+                  { color: colors.textSecondary },
+                  isSelected && { color: colors.primary, fontWeight: '700' },
+                ]}
+              >
+                {cat.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      <Text style={styles.label}>Target Amount (₦)</Text>
+      <Text style={[styles.label, { color: colors.text }]}>Target Amount (₦)</Text>
       <TextInput
-        style={styles.input}
+        style={glassInput}
         placeholder="e.g. 50000"
-        placeholderTextColor={Colors.textLight}
+        placeholderTextColor={colors.textLight}
         value={target}
         onChangeText={setTarget}
         keyboardType="numeric"
@@ -92,23 +145,16 @@ export default function NewGoalScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: Spacing.md, paddingBottom: Spacing.xxl },
-  heading: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.text, marginBottom: Spacing.lg },
-  label: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.text, marginBottom: Spacing.sm, marginTop: Spacing.md },
-  input: {
-    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
-    borderRadius: BorderRadius.md, padding: Spacing.md, fontSize: FontSize.md, color: Colors.text,
-  },
+  heading: { fontSize: FontSize.xl, fontWeight: '800', marginBottom: Spacing.lg },
+  label: { fontSize: FontSize.sm, fontWeight: '600', marginBottom: Spacing.sm, marginTop: Spacing.md },
   categories: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   catCard: {
-    width: '30%', alignItems: 'center', padding: Spacing.md,
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
-    borderWidth: 1.5, borderColor: Colors.border, gap: 4,
+    width: '30%',
+    alignItems: 'center',
+    padding: Spacing.md,
+    gap: 4,
   },
-  catSelected: { borderColor: Colors.primary, backgroundColor: Colors.primaryLight + '08' },
   catIcon: { fontSize: 28 },
-  catLabel: { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: '500' },
-  catLabelSelected: { color: Colors.primary, fontWeight: '700' },
+  catLabel: { fontSize: FontSize.xs, fontWeight: '500' },
   createBtn: { marginTop: Spacing.xl },
 });
