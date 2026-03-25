@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  RefreshControl, Platform,
+  RefreshControl, Platform, Animated as RNAnimated,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -65,6 +64,23 @@ function glassBg(isDark: boolean) {
       ? ({ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' } as any)
       : {}),
   };
+}
+
+// ─── FadeIn component ─────────────────────────────────────────
+
+function FadeIn({ delay = 0, children, style }: { delay?: number; children: React.ReactNode; style?: any }) {
+  const opacity = React.useRef(new RNAnimated.Value(0)).current;
+  const translateY = React.useRef(new RNAnimated.Value(20)).current;
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      RNAnimated.parallel([
+        RNAnimated.timing(opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        RNAnimated.spring(translateY, { toValue: 0, damping: 15, useNativeDriver: true }),
+      ]).start();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, []);
+  return <RNAnimated.View style={[style, { opacity, transform: [{ translateY }] }]}>{children}</RNAnimated.View>;
 }
 
 // ─── Component ───────────────────────────────────────────────
@@ -132,8 +148,8 @@ export default function HomeScreen() {
       }
     >
       {/* ── Greeting (delay 0ms) ── */}
-      <Animated.View
-        entering={FadeInDown.delay(0).springify().damping(15)}
+      <FadeIn
+        delay={0}
         style={{ marginBottom: Spacing.md, marginTop: Spacing.sm }}
       >
         <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary, marginBottom: 2 }}>
@@ -168,10 +184,10 @@ export default function HomeScreen() {
         }}>
           {affirmation}
         </Text>
-      </Animated.View>
+      </FadeIn>
 
       {/* ── Wallet Card — Aurora Gradient (delay 150ms) ── */}
-      <Animated.View entering={FadeInDown.delay(150).springify().damping(15)}>
+      <FadeIn delay={150}>
         <LinearGradient
           colors={gradientColors}
           start={{ x: 0, y: 0 }}
@@ -260,11 +276,11 @@ export default function HomeScreen() {
             ))}
           </View>
         </LinearGradient>
-      </Animated.View>
+      </FadeIn>
 
       {/* ── Quick Stats (delay 300ms) ── */}
-      <Animated.View
-        entering={FadeInDown.delay(300).springify().damping(15)}
+      <FadeIn
+        delay={300}
         style={{ flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.lg }}
       >
         {[
@@ -294,10 +310,10 @@ export default function HomeScreen() {
             <Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 1 }}>{stat.label}</Text>
           </View>
         ))}
-      </Animated.View>
+      </FadeIn>
 
       {/* ── Daily Challenge Card (delay 450ms) ── */}
-      <Animated.View entering={FadeInDown.delay(450).springify().damping(15)}>
+      <FadeIn delay={450}>
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={() => router.push('/(tabs)/learn')}
@@ -332,12 +348,12 @@ export default function HomeScreen() {
             Complete a lesson today and keep your streak alive
           </Text>
         </TouchableOpacity>
-      </Animated.View>
+      </FadeIn>
 
       {/* ── Savings Goals (delay 600ms) ── */}
       {profile?.savingsGoals?.length > 0 && (
-        <Animated.View
-          entering={FadeInDown.delay(600).springify().damping(15)}
+        <FadeIn
+          delay={600}
           style={{ marginBottom: Spacing.lg }}
         >
           <View style={{
@@ -380,12 +396,12 @@ export default function HomeScreen() {
               />
             </TouchableOpacity>
           ))}
-        </Animated.View>
+        </FadeIn>
       )}
 
       {/* ── Recent Activity / Transaction Feed (delay 600ms, after goals) ── */}
-      <Animated.View
-        entering={FadeInDown.delay(600).springify().damping(15)}
+      <FadeIn
+        delay={600}
         style={{ marginBottom: Spacing.lg }}
       >
         <Text style={{ fontSize: FontSize.lg, fontWeight: '700', color: colors.text, marginBottom: Spacing.sm }}>
@@ -432,11 +448,11 @@ export default function HomeScreen() {
             </View>
           ))}
         </View>
-      </Animated.View>
+      </FadeIn>
 
       {/* ── AI Insights (delay 750ms) ── */}
       {insights.length > 0 && (
-        <Animated.View entering={FadeInDown.delay(750).springify().damping(15)}>
+        <FadeIn delay={750}>
           <Text style={{ fontSize: FontSize.lg, fontWeight: '700', color: colors.text, marginBottom: Spacing.sm }}>
             For You
           </Text>
@@ -470,7 +486,7 @@ export default function HomeScreen() {
               </View>
             ))}
           </View>
-        </Animated.View>
+        </FadeIn>
       )}
 
       {/* ── Interswitch Footer Badge ── */}

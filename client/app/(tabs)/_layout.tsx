@@ -2,7 +2,6 @@ import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { BounceIn } from 'react-native-reanimated';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useResponsive } from '../../src/hooks/useResponsive';
 import DesktopSidebar from '../../src/components/DesktopSidebar';
@@ -16,25 +15,16 @@ const TAB_ICONS: Record<string, [string, string]> = {
   profile:   ['person', 'person-outline'],
 };
 
-interface AnimatedTabIconProps {
+interface TabIconProps {
   name: string;
   color: string;
   size: number;
   focused: boolean;
 }
 
-function AnimatedTabIcon({ name, color, size, focused }: AnimatedTabIconProps) {
+function TabIcon({ name, color, size, focused }: TabIconProps) {
   const [active, inactive] = TAB_ICONS[name] ?? ['ellipse', 'ellipse-outline'];
   const iconName = focused ? active : inactive;
-
-  if (focused) {
-    return (
-      <Animated.View entering={BounceIn.duration(400)}>
-        <Ionicons name={iconName as any} size={size} color={color} />
-      </Animated.View>
-    );
-  }
-
   return <Ionicons name={iconName as any} size={size} color={color} />;
 }
 
@@ -92,7 +82,7 @@ export default function TabLayout() {
             options={{
               title: 'Home',
               tabBarIcon: ({ color, size, focused }) => (
-                <AnimatedTabIcon name="index" color={color} size={size} focused={focused} />
+                <TabIcon name="index" color={color} size={size} focused={focused} />
               ),
               headerTitle: 'Purse',
             }}
@@ -102,7 +92,7 @@ export default function TabLayout() {
             options={{
               title: 'Learn',
               tabBarIcon: ({ color, size, focused }) => (
-                <AnimatedTabIcon name="learn" color={color} size={size} focused={focused} />
+                <TabIcon name="learn" color={color} size={size} focused={focused} />
               ),
               headerTitle: 'Financial Lessons',
             }}
@@ -112,7 +102,7 @@ export default function TabLayout() {
             options={{
               title: 'Save',
               tabBarIcon: ({ color, size, focused }) => (
-                <AnimatedTabIcon name="savings" color={color} size={size} focused={focused} />
+                <TabIcon name="savings" color={color} size={size} focused={focused} />
               ),
               headerTitle: 'Savings Goals',
             }}
@@ -122,7 +112,7 @@ export default function TabLayout() {
             options={{
               title: 'WAG',
               tabBarIcon: ({ color, size, focused }) => (
-                <AnimatedTabIcon name="community" color={color} size={size} focused={focused} />
+                <TabIcon name="community" color={color} size={size} focused={focused} />
               ),
               headerTitle: 'Community',
             }}
@@ -132,7 +122,7 @@ export default function TabLayout() {
             options={{
               title: 'Profile',
               tabBarIcon: ({ color, size, focused }) => (
-                <AnimatedTabIcon name="profile" color={color} size={size} focused={focused} />
+                <TabIcon name="profile" color={color} size={size} focused={focused} />
               ),
               headerTitle: 'My Profile',
             }}

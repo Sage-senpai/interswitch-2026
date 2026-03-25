@@ -1,11 +1,5 @@
-import React, { useEffect } from 'react';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Easing } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 
 interface SkeletonBoxProps {
@@ -16,19 +10,28 @@ interface SkeletonBoxProps {
 
 export default function SkeletonBox({ width, height, borderRadius = 8 }: SkeletonBoxProps) {
   const { isDark } = useTheme();
-  const opacity = useSharedValue(0.3);
+  const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    opacity.value = withRepeat(
-      withTiming(0.7, { duration: 750, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true,
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.7,
+          duration: 750,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.3,
+          duration: 750,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
     );
+    loop.start();
+    return () => loop.stop();
   }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
 
   const backgroundColor = isDark
     ? 'rgba(179,157,219,0.15)'
@@ -37,8 +40,8 @@ export default function SkeletonBox({ width, height, borderRadius = 8 }: Skeleto
   return (
     <Animated.View
       style={[
-        animatedStyle,
         {
+          opacity,
           width: width as any,
           height: height as any,
           borderRadius,

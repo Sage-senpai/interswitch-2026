@@ -1,18 +1,59 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Alert, useWindowDimensions, Platform,
+  Alert, useWindowDimensions, Platform, Animated as RNAnimated,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInRight, FadeInDown, FadeOutLeft } from 'react-native-reanimated';
 import * as Speech from 'expo-speech';
-import * as Haptics from 'expo-haptics';
 import Button from '../../src/components/Button';
 import Card from '../../src/components/Card';
 import { useTheme } from '../../src/hooks/useTheme';
 import { FontSize, Spacing, BorderRadius } from '../../src/constants/theme';
 import { lessonAPI } from '../../src/services/api';
+
+// ─── FadeIn helper ────────────────────────────────────────────────────────────
+
+function FadeIn({ delay = 0, children, style }: { delay?: number; children: React.ReactNode; style?: any }) {
+  const opacity = useRef(new RNAnimated.Value(0)).current;
+  const translateY = useRef(new RNAnimated.Value(20)).current;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      RNAnimated.parallel([
+        RNAnimated.timing(opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        RNAnimated.spring(translateY, { toValue: 0, damping: 15, useNativeDriver: true }),
+      ]).start();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, []);
+  return (
+    <RNAnimated.View style={[style, { opacity, transform: [{ translateY }] }]}>
+      {children}
+    </RNAnimated.View>
+  );
+}
+
+// ─── Slide-in helper (replaces FadeInRight) ───────────────────────────────────
+
+function SlideInRight({ animKey, children }: { animKey: string | number; children: React.ReactNode }) {
+  const opacity = useRef(new RNAnimated.Value(0)).current;
+  const translateX = useRef(new RNAnimated.Value(30)).current;
+
+  useEffect(() => {
+    opacity.setValue(0);
+    translateX.setValue(30);
+    RNAnimated.parallel([
+      RNAnimated.timing(opacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+      RNAnimated.timing(translateX, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start();
+  }, [animKey]);
+
+  return (
+    <RNAnimated.View style={{ opacity, transform: [{ translateX }] }}>
+      {children}
+    </RNAnimated.View>
+  );
+}
 
 export default function LessonDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,6 +70,10 @@ export default function LessonDetailScreen() {
   const [completing, setCompleting] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Celebration animation values
+  const celebrationOpacity = useRef(new RNAnimated.Value(0)).current;
+  const celebrationScale = useRef(new RNAnimated.Value(0.7)).current;
 
   const speakText = async (text: string) => {
     try {
@@ -49,20 +94,24 @@ export default function LessonDetailScreen() {
     }
   };
 
-  const hapticSuccess = () => {
-    try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
-  };
-
-  const hapticLight = () => {
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
-  };
-
   useEffect(() => {
     lessonAPI.getOne(id!)
       .then((res) => setLesson(res.data.data))
       .catch(() => {});
     return () => { Speech.stop(); };
   }, [id]);
+
+  // Animate celebration card in when showCelebration becomes true
+  useEffect(() => {
+    if (showCelebration) {
+      celebrationOpacity.setValue(0);
+      celebrationScale.setValue(0.7);
+      RNAnimated.parallel([
+        RNAnimated.timing(celebrationOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+        RNAnimated.spring(celebrationScale, { toValue: 1, damping: 12, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [showCelebration]);
 
   if (!lesson) {
     return (
@@ -90,9 +139,6 @@ export default function LessonDetailScreen() {
     setQuizAnswered(true);
     if (index === section.answer) {
       setScore((prev) => prev + 1);
-      hapticSuccess();
-    } else {
-      hapticLight();
     }
   };
 
@@ -120,7 +166,6 @@ export default function LessonDetailScreen() {
       const res = await lessonAPI.complete(id!, finalScore);
       const data = res.data.data;
 
-      hapticSuccess();
       setShowCelebration(true);
       setTimeout(() => {
         setShowCelebration(false);
@@ -157,7 +202,7 @@ export default function LessonDetailScreen() {
     switch (section.type) {
       case 'text':
         return (
-          <Animated.View entering={FadeInRight.duration(300)} key={`s-${currentSection}`}>
+          <SlideInRight animKey={`s-${currentSection}`}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
               <Text style={[styles.sectionText, { color: colors.text, flex: 1 }]}>
                 {getSectionText(section)}
@@ -175,12 +220,12 @@ export default function LessonDetailScreen() {
                 <Ionicons name={isSpeaking ? 'stop' : 'volume-high'} size={16} color={colors.primary} />
               </TouchableOpacity>
             </View>
-          </Animated.View>
+          </SlideInRight>
         );
 
       case 'tip':
         return (
-          <Animated.View entering={FadeInRight.duration(300)} key={`s-${currentSection}`}>
+          <SlideInRight animKey={`s-${currentSection}`}>
             <View style={[styles.specialCard, { backgroundColor: colors.accent + '12', borderColor: colors.accent + '30' }]}>
               <View style={styles.specialHeader}>
                 <Ionicons name="bulb" size={22} color={colors.accent} />
@@ -188,12 +233,12 @@ export default function LessonDetailScreen() {
               </View>
               <Text style={[styles.specialText, { color: colors.text }]}>{getSectionText(section)}</Text>
             </View>
-          </Animated.View>
+          </SlideInRight>
         );
 
       case 'quiz':
         return (
-          <Animated.View entering={FadeInRight.duration(300)} key={`s-${currentSection}`}>
+          <SlideInRight animKey={`s-${currentSection}`}>
             <View style={[styles.quizBadge, { backgroundColor: colors.primary + '15' }]}>
               <Ionicons name="help-circle" size={18} color={colors.primary} />
               <Text style={[styles.quizBadgeText, { color: colors.primary }]}>Quiz Time</Text>
@@ -239,23 +284,25 @@ export default function LessonDetailScreen() {
               })}
             </View>
             {quizAnswered && (
-              <Animated.View entering={FadeInRight.duration(300)} style={[
-                styles.quizFeedback,
-                { backgroundColor: selectedAnswer === section.answer ? colors.success + '12' : colors.danger + '12' },
-              ]}>
-                <Ionicons
-                  name={selectedAnswer === section.answer ? 'checkmark-circle' : 'information-circle'}
-                  size={20}
-                  color={selectedAnswer === section.answer ? colors.success : colors.danger}
-                />
-                <Text style={[styles.quizFeedbackText, { color: colors.text }]}>
-                  {selectedAnswer === section.answer
-                    ? 'Correct! Well done!'
-                    : `The correct answer is ${String.fromCharCode(65 + section.answer)}. Keep learning!`}
-                </Text>
-              </Animated.View>
+              <SlideInRight animKey={`feedback-${currentSection}`}>
+                <View style={[
+                  styles.quizFeedback,
+                  { backgroundColor: selectedAnswer === section.answer ? colors.success + '12' : colors.danger + '12' },
+                ]}>
+                  <Ionicons
+                    name={selectedAnswer === section.answer ? 'checkmark-circle' : 'information-circle'}
+                    size={20}
+                    color={selectedAnswer === section.answer ? colors.success : colors.danger}
+                  />
+                  <Text style={[styles.quizFeedbackText, { color: colors.text }]}>
+                    {selectedAnswer === section.answer
+                      ? 'Correct! Well done!'
+                      : `The correct answer is ${String.fromCharCode(65 + section.answer)}. Keep learning!`}
+                  </Text>
+                </View>
+              </SlideInRight>
             )}
-          </Animated.View>
+          </SlideInRight>
         );
 
       default:
@@ -350,17 +397,18 @@ export default function LessonDetailScreen() {
 
       {/* ── Celebration Overlay ── */}
       {showCelebration && (
-        <Animated.View
-          entering={FadeInDown.springify().damping(12)}
+        <RNAnimated.View
           style={{
             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: 'rgba(0,0,0,0.6)',
             alignItems: 'center', justifyContent: 'center', zIndex: 999,
+            opacity: celebrationOpacity,
           }}
         >
-          <Animated.View entering={FadeInDown.delay(200).springify().damping(10)} style={{
+          <RNAnimated.View style={{
             backgroundColor: colors.surface, borderRadius: 24, padding: 40,
             alignItems: 'center', maxWidth: 300,
+            transform: [{ scale: celebrationScale }],
             ...(Platform.OS === 'web' ? { backdropFilter: 'blur(20px)' } as any : {}),
           }}>
             <Text style={{ fontSize: 64, marginBottom: 16 }}>🎉</Text>
@@ -370,8 +418,8 @@ export default function LessonDetailScreen() {
             <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center' }}>
               Amazing work! You're one step closer to financial freedom.
             </Text>
-          </Animated.View>
-        </Animated.View>
+          </RNAnimated.View>
+        </RNAnimated.View>
       )}
     </ScrollView>
   );

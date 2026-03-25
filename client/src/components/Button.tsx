@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useRef, useMemo } from 'react';
 import {
+  Animated,
   Text,
   StyleSheet,
   ActivityIndicator,
@@ -8,12 +9,6 @@ import {
   StyleProp,
   Pressable,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 import { useTheme } from '../hooks/useTheme';
 import { BorderRadius, FontSize, Spacing } from '../constants/theme';
 
@@ -46,27 +41,27 @@ export default function Button({
   const isDisabled = disabled || loading;
 
   // ── Spring scale animation ────────────────────────────────
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.96, { damping: 10, stiffness: 300 });
+    Animated.spring(scale, {
+      toValue: 0.96,
+      damping: 10,
+      stiffness: 300,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1.0, { damping: 10, stiffness: 300 });
+    Animated.spring(scale, {
+      toValue: 1.0,
+      damping: 10,
+      stiffness: 300,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handlePress = () => {
-    // ── Haptic feedback (no-op on web / unsupported devices) ──
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {
-      // Haptics not available on this platform — silently ignore
-    }
     onPress();
   };
 
@@ -98,7 +93,7 @@ export default function Button({
         themed[variant],
         styles[`size_${size}`],
         isDisabled && styles.disabled,
-        animatedStyle,
+        { transform: [{ scale }] },
         style,
       ]}
     >

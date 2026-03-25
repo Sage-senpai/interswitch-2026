@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,17 +9,10 @@ import {
   ListRenderItemInfo,
   Platform,
   StatusBar,
+  Animated as RNAnimated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  interpolateColor,
-  useDerivedValue,
-  withTiming,
-} from 'react-native-reanimated';
 import { useTheme } from '../../src/hooks/useTheme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -60,23 +53,35 @@ const SLIDES: OnboardingSlide[] = [
   },
 ];
 
-function Dot({ index, activeIndex }: { index: number; activeIndex: { value: number } }) {
-  const { colors } = useTheme();
+// ─── Dot component using RN Animated ─────────────────────────────────────────
 
-  const animatedStyle = useAnimatedStyle(() => {
-    const isActive = Math.round(activeIndex.value) === index;
-    return {
-      width: withSpring(isActive ? 24 : 8, { damping: 15, stiffness: 180 }),
-      opacity: withTiming(isActive ? 1 : 0.35, { duration: 200 }),
-    };
-  });
+function Dot({ index, currentIndex }: { index: number; currentIndex: number }) {
+  const { colors } = useTheme();
+  const width = useRef(new RNAnimated.Value(index === 0 ? 24 : 8)).current;
+  const opacity = useRef(new RNAnimated.Value(index === 0 ? 1 : 0.35)).current;
+
+  useEffect(() => {
+    const isActive = currentIndex === index;
+    RNAnimated.parallel([
+      RNAnimated.spring(width, {
+        toValue: isActive ? 24 : 8,
+        damping: 15,
+        stiffness: 180,
+        useNativeDriver: false,
+      }),
+      RNAnimated.timing(opacity, {
+        toValue: isActive ? 1 : 0.35,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [currentIndex]);
 
   return (
-    <Animated.View
+    <RNAnimated.View
       style={[
         styles.dot,
-        animatedStyle,
-        { backgroundColor: colors.primary },
+        { width, opacity, backgroundColor: colors.primary },
       ]}
     />
   );
@@ -87,9 +92,24 @@ export default function OnboardingScreen() {
   const { colors, isDark } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
-  const activeIndex = useSharedValue(0);
+
+  // Next button background color animation
+  const btnColorProgress = useRef(new RNAnimated.Value(0)).current;
 
   const isLast = currentIndex === SLIDES.length - 1;
+
+  useEffect(() => {
+    RNAnimated.timing(btnColorProgress, {
+      toValue: isLast ? 1 : 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [isLast]);
+
+  const btnBackgroundColor = btnColorProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [colors.primary, SLIDES[2].iconColor],
+  });
 
   const handleSkip = () => {
     router.replace('/(auth)/login?mode=register' as any);
@@ -103,19 +123,11 @@ export default function OnboardingScreen() {
     const nextIndex = currentIndex + 1;
     flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
     setCurrentIndex(nextIndex);
-    activeIndex.value = withSpring(nextIndex, { damping: 20, stiffness: 200 });
-  };
-
-  const onScroll = (e: any) => {
-    const offsetX = e.nativeEvent.contentOffset.x;
-    const index = offsetX / SCREEN_WIDTH;
-    activeIndex.value = index;
   };
 
   const onMomentumScrollEnd = (e: any) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
     setCurrentIndex(index);
-    activeIndex.value = index;
   };
 
   const renderItem = ({ item }: ListRenderItemInfo<OnboardingSlide>) => (
@@ -129,13 +141,6 @@ export default function OnboardingScreen() {
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
     </View>
   );
-
-  const nextButtonAnimStyle = useAnimatedStyle(() => ({
-    backgroundColor: withTiming(
-      isLast ? SLIDES[2].iconColor : colors.primary,
-      { duration: 250 },
-    ),
-  }));
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -159,7 +164,6 @@ export default function OnboardingScreen() {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onScroll={onScroll}
         onMomentumScrollEnd={onMomentumScrollEnd}
         scrollEventThrottle={16}
         bounces={false}
@@ -171,12 +175,12 @@ export default function OnboardingScreen() {
         {/* Dots */}
         <View style={styles.dotsRow}>
           {SLIDES.map((_, i) => (
-            <Dot key={i} index={i} activeIndex={activeIndex} />
+            <Dot key={i} index={i} currentIndex={currentIndex} />
           ))}
         </View>
 
         {/* Next / Get Started button */}
-        <Animated.View style={[styles.nextBtn, nextButtonAnimStyle]}>
+        <RNAnimated.View style={[styles.nextBtn, { backgroundColor: btnBackgroundColor }]}>
           <TouchableOpacity
             onPress={handleNext}
             activeOpacity={0.85}
@@ -189,7 +193,7 @@ export default function OnboardingScreen() {
               <Ionicons name="arrow-forward" size={18} color="#fff" style={{ marginLeft: 6 }} />
             )}
           </TouchableOpacity>
-        </Animated.View>
+        </RNAnimated.View>
       </View>
     </View>
   );

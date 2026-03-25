@@ -1,15 +1,7 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import Animated, {
-  useAnimatedProps,
-  useSharedValue,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
 import { useTheme } from '../hooks/useTheme';
-
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface CircularProgressProps {
   size?: number;
@@ -36,19 +28,27 @@ export default function CircularProgress({
   const center = size / 2;
 
   const clampedProgress = Math.min(100, Math.max(0, progress));
-  const animatedProgress = useSharedValue(0);
+
+  // Animated.Value drives the progress (0–100); a listener syncs it to state
+  // so the SVG Circle re-renders with the correct strokeDashoffset.
+  const animatedProgress = useRef(new Animated.Value(0)).current;
+  const [strokeDashoffset, setStrokeDashoffset] = useState(circumference);
 
   useEffect(() => {
-    animatedProgress.value = withTiming(clampedProgress, {
+    const id = animatedProgress.addListener(({ value }) => {
+      setStrokeDashoffset(circumference - (value / 100) * circumference);
+    });
+    return () => animatedProgress.removeListener(id);
+  }, [circumference]);
+
+  useEffect(() => {
+    Animated.timing(animatedProgress, {
+      toValue: clampedProgress,
       duration: 700,
       easing: Easing.out(Easing.cubic),
-    });
+      useNativeDriver: false, // drives JS-side state, not a native prop
+    }).start();
   }, [clampedProgress]);
-
-  const animatedProps = useAnimatedProps(() => {
-    const strokeDashoffset = circumference - (animatedProgress.value / 100) * circumference;
-    return { strokeDashoffset };
-  });
 
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
@@ -63,7 +63,7 @@ export default function CircularProgress({
           fill="none"
         />
         {/* Progress ring */}
-        <AnimatedCircle
+        <Circle
           cx={center}
           cy={center}
           r={radius}
@@ -71,7 +71,7 @@ export default function CircularProgress({
           strokeWidth={strokeWidth}
           fill="none"
           strokeDasharray={circumference}
-          animatedProps={animatedProps}
+          strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
           // rotate so it starts from 12 o'clock
           transform={`rotate(-90 ${center} ${center})`}

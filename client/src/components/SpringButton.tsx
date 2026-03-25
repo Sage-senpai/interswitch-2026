@@ -1,10 +1,5 @@
-import React from 'react';
-import { TouchableOpacity, TouchableOpacityProps } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import React, { useRef } from 'react';
+import { Animated, TouchableOpacity, TouchableOpacityProps } from 'react-native';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -13,25 +8,31 @@ interface SpringButtonProps extends TouchableOpacityProps {
 }
 
 export default function SpringButton({ children, onPressIn, onPressOut, style, ...rest }: SpringButtonProps) {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = (e: any) => {
-    scale.value = withSpring(0.95, { damping: 15, stiffness: 150 });
+    Animated.spring(scale, {
+      toValue: 0.95,
+      damping: 15,
+      stiffness: 150,
+      useNativeDriver: true,
+    }).start();
     onPressIn?.(e);
   };
 
   const handlePressOut = (e: any) => {
-    scale.value = withSpring(1.0, { damping: 15, stiffness: 150 });
+    Animated.spring(scale, {
+      toValue: 1.0,
+      damping: 15,
+      stiffness: 150,
+      useNativeDriver: true,
+    }).start();
     onPressOut?.(e);
   };
 
   return (
     <AnimatedTouchable
-      style={[animatedStyle, style]}
+      style={[{ transform: [{ scale }] }, style]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       activeOpacity={1}
