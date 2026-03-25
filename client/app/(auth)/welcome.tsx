@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Animated, Platform,
-  TouchableOpacity, ImageBackground, Image, useWindowDimensions,
+  TouchableOpacity, ImageBackground, Image, useWindowDimensions, FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -49,6 +49,26 @@ const TESTIMONIALS = [
     name: 'Chidinma O.',
     role: 'University Student, Enugu',
   },
+  {
+    text: 'The bill payment feature saves me time every week. I pay school fees right from my phone.',
+    name: 'Mrs. Adebayo',
+    role: 'Teacher, Lagos State',
+  },
+  {
+    text: 'I used to keep money under my mattress. Now I have a savings goal and see my progress daily.',
+    name: 'Amina Yusuf',
+    role: 'Seamstress, Kano State',
+  },
+  {
+    text: 'Purse helped our cooperative become transparent. Every member verifies contributions on blockchain.',
+    name: 'Sister Grace',
+    role: 'Cooperative Secretary, Rivers',
+  },
+  {
+    text: 'The financial literacy lessons changed my life. I negotiated a better loan for my shop.',
+    name: 'Ngozi Eze',
+    role: 'Shop Owner, Anambra State',
+  },
 ];
 
 const HOW_IT_WORKS = [
@@ -57,6 +77,91 @@ const HOW_IT_WORKS = [
   { step: '03', title: 'Save & Grow', desc: 'Set savings goals, enable auto-save, and join WAG group savings.' },
   { step: '04', title: 'Pay & Transact', desc: 'Fund your wallet, pay bills, and transfer money — all via Interswitch.' },
 ];
+
+// ─── Auto-scrolling testimonial carousel ─────────────────
+function TestimonialCarousel({ testimonials, colors }: { testimonials: typeof TESTIMONIALS; colors: any }) {
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const flatListRef = useRef<FlatList>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const CARD_WIDTH = 320;
+  const CARD_GAP = 16;
+
+  // Auto-scroll right to left
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => {
+        const next = (prev + 1) % testimonials.length;
+        flatListRef.current?.scrollToOffset({
+          offset: next * (CARD_WIDTH + CARD_GAP),
+          animated: true,
+        });
+        return next;
+      });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const renderItem = useCallback(({ item, index }: { item: typeof testimonials[0]; index: number }) => (
+    <View style={[carouselStyles.card, { backgroundColor: colors.surface, borderColor: colors.border, width: CARD_WIDTH, marginRight: CARD_GAP }]}>
+      <View style={[carouselStyles.quoteIcon, { backgroundColor: colors.primary + '12' }]}>
+        <Ionicons name="chatbox-ellipses" size={18} color={colors.primary} />
+      </View>
+      <Text style={[carouselStyles.text, { color: colors.text }]}>"{item.text}"</Text>
+      <View style={carouselStyles.author}>
+        <View style={[carouselStyles.avatar, { backgroundColor: colors.primary + '18' }]}>
+          <Text style={[carouselStyles.initial, { color: colors.primary }]}>{item.name.charAt(0)}</Text>
+        </View>
+        <View>
+          <Text style={[carouselStyles.name, { color: colors.text }]}>{item.name}</Text>
+          <Text style={[carouselStyles.role, { color: colors.textSecondary }]}>{item.role}</Text>
+        </View>
+      </View>
+    </View>
+  ), [colors]);
+
+  return (
+    <View>
+      <Animated.FlatList
+        ref={flatListRef}
+        data={testimonials}
+        renderItem={renderItem}
+        keyExtractor={(_, i) => i.toString()}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 24 }}
+        snapToInterval={CARD_WIDTH + CARD_GAP}
+        decelerationRate="fast"
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: true })}
+      />
+      <View style={carouselStyles.dots}>
+        {testimonials.map((_, i) => (
+          <View
+            key={i}
+            style={[
+              carouselStyles.dot,
+              { backgroundColor: i === activeIndex ? colors.primary : colors.border },
+              i === activeIndex && carouselStyles.dotActive,
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const carouselStyles = StyleSheet.create({
+  card: { borderRadius: 16, borderWidth: 1, padding: 24, justifyContent: 'space-between' },
+  quoteIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  text: { fontSize: 15, lineHeight: 24, fontStyle: 'italic', marginBottom: 20, minHeight: 72 },
+  author: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  initial: { fontSize: 16, fontWeight: '800' },
+  name: { fontSize: 14, fontWeight: '700' },
+  role: { fontSize: 12 },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 20 },
+  dot: { width: 7, height: 7, borderRadius: 3.5 },
+  dotActive: { width: 20 },
+});
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -272,8 +377,8 @@ export default function WelcomeScreen() {
         </View>
       </View>
 
-      {/* ═══ TESTIMONIALS ═══ */}
-      <View style={[styles.section, { backgroundColor: colors.background }]}>
+      {/* ═══ TESTIMONIALS CAROUSEL ═══ */}
+      <View style={[styles.section, { backgroundColor: colors.background, overflow: 'hidden' }]}>
         <View style={styles.sectionInner}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionLabel, { color: colors.primary }]}>TESTIMONIALS</Text>
@@ -281,26 +386,8 @@ export default function WelcomeScreen() {
               Hear from our women
             </Text>
           </View>
-          <View style={[styles.testimonialGrid, isWide && styles.testimonialGridWide]}>
-            {TESTIMONIALS.map((t, i) => (
-              <View key={i} style={[styles.testimonialCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <Ionicons name="chatbox-ellipses" size={24} color={colors.primary + '40'} style={{ marginBottom: 12 }} />
-                <Text style={[styles.testimonialText, { color: colors.text }]}>"{t.text}"</Text>
-                <View style={styles.testimonialAuthor}>
-                  <View style={[styles.testimonialAvatar, { backgroundColor: colors.primary + '20' }]}>
-                    <Text style={[styles.testimonialInitial, { color: colors.primary }]}>
-                      {t.name.charAt(0)}
-                    </Text>
-                  </View>
-                  <View>
-                    <Text style={[styles.testimonialName, { color: colors.text }]}>{t.name}</Text>
-                    <Text style={[styles.testimonialRole, { color: colors.textSecondary }]}>{t.role}</Text>
-                  </View>
-                </View>
-              </View>
-            ))}
-          </View>
         </View>
+        <TestimonialCarousel testimonials={TESTIMONIALS} colors={colors} />
       </View>
 
       {/* ═══ CTA SECTION ═══ */}
@@ -510,16 +597,7 @@ const styles = StyleSheet.create({
   stepTitle: { fontSize: 16, fontWeight: '700', marginBottom: 6, textAlign: 'center' },
   stepDesc: { fontSize: 13, lineHeight: 20, textAlign: 'center', maxWidth: 220 },
 
-  // ─── Testimonials ──────────
-  testimonialGrid: { gap: 16 },
-  testimonialGridWide: { flexDirection: 'row' },
-  testimonialCard: { flex: 1, padding: 24, borderRadius: 16, borderWidth: 1, minWidth: 280 },
-  testimonialText: { fontSize: 15, lineHeight: 24, fontStyle: 'italic', marginBottom: 20 },
-  testimonialAuthor: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  testimonialAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  testimonialInitial: { fontSize: 16, fontWeight: '800' },
-  testimonialName: { fontSize: 14, fontWeight: '700' },
-  testimonialRole: { fontSize: 12 },
+  // ─── Testimonials (handled by TestimonialCarousel component) ──
 
   // ─── CTA ───────────────────
   ctaBg: { minHeight: 350, justifyContent: 'center' },

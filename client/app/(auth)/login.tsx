@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Animated, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,6 +10,16 @@ import AfricanPattern from '../../src/components/AfricanPattern';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useResponsive } from '../../src/hooks/useResponsive';
 import { FontSize, Spacing, BorderRadius } from '../../src/constants/theme';
+
+const AUTH_TESTIMONIALS = [
+  { text: "Since I started using Purse, I've saved N50,000 for my daughter's school fees. The lessons taught me how to budget properly.", name: 'Mama Blessing', role: 'Market Woman, Ogun State' },
+  { text: "Our WAG group of 15 women saved over N2 million in 6 months. Purse made it easy to track everything.", name: 'Hajiya Fatima', role: 'WAG Leader, Kebbi State' },
+  { text: "I never knew I could invest with just N1,000. The AI advisor helped me start small and stay consistent.", name: 'Chidinma O.', role: 'University Student, Enugu' },
+  { text: "The bill payment feature saves me time every week. I pay my children's school fees right from my phone.", name: 'Mrs. Adebayo', role: 'Teacher, Lagos State' },
+  { text: "I used to keep money under my mattress. Now I have a savings goal and I can see my progress every day.", name: 'Amina Yusuf', role: 'Seamstress, Kano State' },
+  { text: "Purse helped our cooperative group become transparent. Every member can verify contributions on the blockchain.", name: 'Sister Grace', role: 'Cooperative Secretary, Rivers State' },
+  { text: "The financial literacy lessons changed my life. I now understand interest rates and I negotiated a better loan for my shop.", name: 'Ngozi Eze', role: 'Shop Owner, Anambra State' },
+];
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -25,12 +35,25 @@ export default function LoginScreen() {
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
+  const testimonialFade = useRef(new Animated.Value(1)).current;
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
     ]).start();
+  }, []);
+
+  // Rotate testimonials every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      Animated.timing(testimonialFade, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
+        setTestimonialIndex((prev) => (prev + 1) % AUTH_TESTIMONIALS.length);
+        Animated.timing(testimonialFade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+      });
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSubmit = async () => {
@@ -157,20 +180,26 @@ export default function LoginScreen() {
             <Text style={styles.leftSubtitle}>Financial literacy & empowerment for Nigerian women</Text>
           </View>
 
-          <View style={styles.testimonial}>
+          <Animated.View style={[styles.testimonial, { opacity: testimonialFade }]}>
+            <Ionicons name="chatbox-ellipses" size={20} color="rgba(255,255,255,0.25)" style={{ marginBottom: 8 }} />
             <Text style={styles.quoteText}>
-              "Since I started using Purse, I've saved ₦50,000 for my daughter's school fees. The lessons taught me how to budget properly."
+              "{AUTH_TESTIMONIALS[testimonialIndex].text}"
             </Text>
             <View style={styles.quoteAuthor}>
               <View style={styles.quoteAvatar}>
-                <Ionicons name="person" size={16} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.quoteInitial}>{AUTH_TESTIMONIALS[testimonialIndex].name.charAt(0)}</Text>
               </View>
               <View>
-                <Text style={styles.quoteName}>Mama Blessing</Text>
-                <Text style={styles.quoteRole}>Market Woman, Ogun State</Text>
+                <Text style={styles.quoteName}>{AUTH_TESTIMONIALS[testimonialIndex].name}</Text>
+                <Text style={styles.quoteRole}>{AUTH_TESTIMONIALS[testimonialIndex].role}</Text>
               </View>
             </View>
-          </View>
+            <View style={styles.quoteDots}>
+              {AUTH_TESTIMONIALS.map((_, i) => (
+                <View key={i} style={[styles.quoteDot, i === testimonialIndex && styles.quoteDotActive]} />
+              ))}
+            </View>
+          </Animated.View>
 
           <View style={styles.leftBadges}>
             <View style={styles.leftBadge}>
@@ -222,10 +251,14 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.xl,
   },
   quoteText: { fontSize: FontSize.md, color: 'rgba(255,255,255,0.9)', lineHeight: 24, fontStyle: 'italic', marginBottom: Spacing.md },
-  quoteAuthor: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  quoteAuthor: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.sm },
   quoteAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  quoteInitial: { fontSize: FontSize.sm, fontWeight: '800', color: 'rgba(255,255,255,0.9)' },
   quoteName: { fontSize: FontSize.sm, fontWeight: '700', color: '#FFFFFF' },
   quoteRole: { fontSize: FontSize.xs, color: 'rgba(255,255,255,0.6)' },
+  quoteDots: { flexDirection: 'row', gap: 5, justifyContent: 'center' },
+  quoteDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.2)' },
+  quoteDotActive: { backgroundColor: 'rgba(255,255,255,0.7)', width: 18 },
 
   leftBadges: { flexDirection: 'row', gap: Spacing.md },
   leftBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
